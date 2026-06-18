@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<!-- Dragonfruit 3D Feedback page — v1 -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback — Dragonfruit 3D</title>
+    <meta name="description" content="Tell us what you think of Dragonfruit 3D — products, workshops, the website. Your feedback shapes what we do next.">
+    <link rel="icon" type="image/x-icon" href="/favicon-logo.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32-logo.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512-logo.png">
+    <link rel="apple-touch-icon" href="/favicon-512-logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff0096;
+            --secondary: #ff5ec7;
+            --purple: #9D4EDD;
+            --accent: #00d4ff;
+            --dark: #1a0a2e;
+            --darker: #0a0015;
+            --text: #e0e6ed;
+            --text-dim: #8892a6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--darker);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        a { color: inherit; text-decoration: none; }
+
+        .grid-bg {
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 0, 150, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        header {
+            position: sticky; top: 0;
+            background: rgba(10, 0, 21, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 0, 150, 0.2);
+            z-index: 100;
+        }
+        nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .logo { display: flex; align-items: center; }
+        .logo-text {
+            background: linear-gradient(135deg, #ff0096 0%, #ff5ec7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .nav-links a {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 1.5px;
+            color: var(--text);
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--primary); }
+        .nav-current { color: var(--primary) !important; }
+
+        .hero {
+            position: relative;
+            padding: 4rem 2rem 2rem;
+            text-align: center;
+            background:
+                radial-gradient(circle at 30% 40%, rgba(255, 0, 150, 0.15), transparent 60%),
+                radial-gradient(circle at 70% 60%, rgba(157, 78, 221, 0.12), transparent 60%);
+        }
+        .eyebrow {
+            font-family: 'Space Mono', monospace;
+            color: var(--accent);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            opacity: 0.85;
+        }
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2rem, 4.5vw, 3rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #ff0096 0%, #ff5ec7 50%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+        .hero p {
+            color: var(--text-dim);
+            max-width: 580px;
+            margin: 0 auto;
+        }
+
+        main {
+            position: relative;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+            z-index: 1;
+        }
+        .feedback-form {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 0, 150, 0.3);
+            border-radius: 10px;
+            padding: 2.5rem;
+        }
+        .form-group { margin-bottom: 1.3rem; }
+        .form-group label {
+            display: block;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            color: var(--accent);
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 0, 150, 0.25);
+            border-radius: 4px;
+            color: var(--text);
+            font-family: 'Space Mono', monospace;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 0, 150, 0.15);
+        }
+        .form-group textarea { min-height: 140px; resize: vertical; }
+
+        /* Star rating */
+        .star-rating {
+            display: flex;
+            gap: 0.4rem;
+            font-size: 2rem;
+            cursor: pointer;
+            user-select: none;
+        }
+        .star-rating .star {
+            color: rgba(255, 255, 255, 0.18);
+            transition: color 0.15s, transform 0.1s;
+            padding: 0 0.2rem;
+        }
+        .star-rating .star.active {
+            color: #FFD700;
+            text-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+        }
+        .star-rating .star:hover { transform: scale(1.15); }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background: linear-gradient(135deg, #ff0096, #ff5ec7);
+            color: white;
+            box-shadow: 0 4px 20px rgba(255, 0, 150, 0.4);
+            width: 100%;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255, 0, 150, 0.6);
+        }
+        .btn:disabled { opacity: 0.5; cursor: wait; }
+
+        .success-msg {
+            display: none;
+            padding: 2rem;
+            text-align: center;
+            background: rgba(255, 0, 150, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            color: var(--text);
+        }
+        .success-msg.show { display: block; }
+        .success-msg h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary);
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        footer {
+            background: var(--dark);
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            border-top: 1px solid rgba(255, 0, 150, 0.2);
+        }
+        footer a { color: var(--accent); }
+
+        @media (max-width: 600px) {
+            .feedback-form { padding: 1.5rem; }
+            nav { padding: 1rem; }
+            .nav-links { gap: 1rem; font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-bg"></div>
+
+    <header>
+        <nav>
+            <a href="/" class="logo">
+                <svg width="42" height="42" viewBox="0 0 512 512" style="margin-right: 10px;">
+                    <polygon points="256.00,26.00 455.19,141.00 455.19,371.00 256.00,486.00 56.81,371.00 56.81,141.00" fill="#ff0096"/>
+                    <polygon points="256.00,126.00 368.56,191.00 368.56,321.00 256.00,386.00 143.44,321.00 143.44,191.00" fill="#00d4ff"/>
+                </svg>
+                <span class="logo-text">DRAGONFRUIT 3D</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="/">HOME</a></li>
+                <li><a href="/customize-vase.html">🎨 DESIGN</a></li>
+                <li><a href="/#products">PRODUCTS</a></li>
+                <li><a href="/workshops.html">WORKSHOPS</a></li>
+                <li><a href="/feedback.html" class="nav-current">FEEDBACK</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="eyebrow">// TELL US WHAT YOU THINK</div>
+        <h1>FEEDBACK</h1>
+        <p>What did you like? What could be better? Every comment helps us improve. Honest feedback &gt; polite feedback.</p>
+    </section>
+
+    <main>
+        <form id="feedbackForm" class="feedback-form" name="feedback" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+            <input type="hidden" name="form-name" value="feedback">
+            <p style="display: none;"><label>Don't fill this out: <input name="bot-field"></label></p>
+
+            <div class="form-group">
+                <label>WHAT'S THIS FEEDBACK ABOUT? *</label>
+                <select name="topic" required>
+                    <option value="">— Select —</option>
+                    <option value="product">A product I ordered</option>
+                    <option value="vase-customizer">Vase Customizer (Design Your Own)</option>
+                    <option value="workshop">A workshop I attended</option>
+                    <option value="website">The website</option>
+                    <option value="general">General / something else</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>OVERALL RATING</label>
+                <div class="star-rating" id="starRating" role="radiogroup" aria-label="Rating">
+                    <span class="star" data-value="1" role="radio" aria-checked="false" tabindex="0">★</span>
+                    <span class="star" data-value="2" role="radio" aria-checked="false" tabindex="0">★</span>
+                    <span class="star" data-value="3" role="radio" aria-checked="false" tabindex="0">★</span>
+                    <span class="star" data-value="4" role="radio" aria-checked="false" tabindex="0">★</span>
+                    <span class="star" data-value="5" role="radio" aria-checked="false" tabindex="0">★</span>
+                </div>
+                <input type="hidden" name="rating" id="ratingInput" value="">
+            </div>
+
+            <div class="form-group">
+                <label>YOUR FEEDBACK *</label>
+                <textarea name="message" placeholder="What worked, what didn't, what you'd change…" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>YOUR NAME (OPTIONAL)</label>
+                <input type="text" name="name">
+            </div>
+
+            <div class="form-group">
+                <label>EMAIL (OPTIONAL — only if you want a reply)</label>
+                <input type="email" name="email" placeholder="your@email.com">
+            </div>
+
+            <button type="submit" class="btn">SEND FEEDBACK</button>
+            <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-dim); text-align: center;">
+                We read every message. Thank you for taking the time.
+            </p>
+        </form>
+
+        <div id="feedbackSuccess" class="success-msg" style="margin-top: 2rem;">
+            <h3>🙏 THANK YOU</h3>
+            <p>Your feedback went through. We read every single one.</p>
+        </div>
+    </main>
+
+    <footer>
+        © 2026 Dragonfruit 3D · <a href="mailto:dragonfruit3d@protonmail.com">dragonfruit3d@protonmail.com</a>
+    </footer>
+
+    <!-- Hidden form for Netlify form detection at deploy time. DO NOT REMOVE. -->
+    <form name="feedback" netlify netlify-honeypot="bot-field" hidden>
+        <select name="topic">
+            <option value="product"></option>
+            <option value="vase-customizer"></option>
+            <option value="workshop"></option>
+            <option value="website"></option>
+            <option value="general"></option>
+        </select>
+        <input type="text" name="rating"/>
+        <textarea name="message"></textarea>
+        <input type="text" name="name"/>
+        <input type="email" name="email"/>
+    </form>
+
+    <script>
+        // Star rating widget
+        const stars = document.querySelectorAll('#starRating .star');
+        const ratingInput = document.getElementById('ratingInput');
+        function setRating(v) {
+            ratingInput.value = v;
+            stars.forEach(s => {
+                const val = parseInt(s.dataset.value, 10);
+                s.classList.toggle('active', val <= v);
+                s.setAttribute('aria-checked', val === v ? 'true' : 'false');
+            });
+        }
+        stars.forEach(star => {
+            star.addEventListener('click', () => setRating(parseInt(star.dataset.value, 10)));
+            star.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setRating(parseInt(star.dataset.value, 10));
+                }
+            });
+        });
+
+        // Inline submit so we can show success without reload
+        const form = document.getElementById('feedbackForm');
+        const success = document.getElementById('feedbackSuccess');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = form.querySelector('button[type="submit"]');
+            const orig = btn.textContent;
+            btn.textContent = 'SENDING…'; btn.disabled = true;
+            const fd = new FormData(form);
+            const body = new URLSearchParams();
+            for (const [k, v] of fd.entries()) body.append(k, v);
+            try {
+                const res = await fetch('/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: body.toString()
+                });
+                if (!res.ok) throw new Error('submit failed: ' + res.status);
+                form.style.display = 'none';
+                success.classList.add('show');
+                success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } catch (err) {
+                console.error(err);
+                btn.textContent = orig; btn.disabled = false;
+                alert("Sorry, something went wrong. Please email dragonfruit3d@protonmail.com directly.");
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "name": "dragonfruit3d-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions for Dragonfruit 3D",
+  "dependencies": {
+    "stripe": "^14.0.0"
+  }
+}

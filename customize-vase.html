@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<!-- Dragonfruit 3D Vase Customizer · v37 (May 26) · SHIP: 3MF is geometry-only (loads in Bambu, manual color paint workflow). Bambu paint_color encoding deferred. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Your Own Vase — Dragonfruit 3D</title>
+<link rel="icon" type="image/x-icon" href="/favicon-logo.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32-logo.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/favicon-512-logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root { --primary:#ff0096; --secondary:#ff5ec7; --accent:#00d4ff; --dark:#0a0015; --darker:#050008; --card:#1a0a2e; --text:#e0e6ed; --text-dim:#8892a6; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Space Mono',monospace;background:var(--darker);color:var(--text);min-height:100vh}
+  nav{background:rgba(10,0,21,.92);backdrop-filter:blur(10px);padding:16px 32px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,0,150,.2)}
+  .nav-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+  .logo{display:flex;align-items:center;text-decoration:none}
+  .logo span{background:linear-gradient(135deg,#ff0096,#ff5ec7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;letter-spacing:2px}
+  .back{color:var(--accent);text-decoration:none;font-size:.85rem;letter-spacing:1px}
+  .header{text-align:center;padding:30px 20px 14px;max-width:900px;margin:0 auto}
+  h1{font-family:'Orbitron',sans-serif;font-size:clamp(1.8rem,5vw,2.6rem);font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:1px;margin-bottom:8px}
+  .header p{color:var(--text-dim);font-size:.9rem;max-width:600px;margin:0 auto}
+  .studio{max-width:1400px;margin:0 auto 60px;padding:0 20px;display:grid;grid-template-columns:1fr 400px;gap:24px}
+  @media (max-width:900px){.studio{grid-template-columns:1fr}}
+  .preview{background:linear-gradient(180deg,var(--card),var(--darker));border:1px solid rgba(255,0,150,.2);border-radius:12px;min-height:600px;position:relative;overflow:hidden}
+  #vaseCanvas{display:block;width:100%!important;height:600px!important}
+  .preview-overlay{position:absolute;bottom:14px;left:14px;color:var(--text-dim);font-size:.75rem;letter-spacing:1px;background:rgba(0,0,0,.5);padding:6px 10px;border-radius:4px;pointer-events:none}
+  .dim-display{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.6);border:1px solid var(--accent);padding:8px 12px;border-radius:6px;font-family:'Orbitron',sans-serif;font-size:.85rem;color:var(--accent);letter-spacing:1px;pointer-events:none}
+  .dim-display .v{color:#fff;font-weight:700}
+  .controls{background:var(--card);border:1px solid rgba(255,0,150,.2);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:18px;max-height:80vh;overflow-y:auto}
+  .controls::-webkit-scrollbar{width:6px}
+  .controls::-webkit-scrollbar-thumb{background:var(--primary);border-radius:3px}
+  .ctrl-section{display:flex;flex-direction:column;gap:10px}
+  .ctrl-label{font-family:'Orbitron',sans-serif;color:var(--accent);font-size:.75rem;letter-spacing:2px;font-weight:700}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px}
+  .opt-btn{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);color:var(--text);padding:10px 6px;border-radius:6px;cursor:pointer;font-family:'Space Mono',monospace;font-size:.8rem;transition:all .15s;text-align:center;line-height:1.2}
+  .opt-btn:hover{border-color:var(--primary)}
+  .opt-btn.active{background:rgba(255,0,150,.15);border-color:var(--primary);color:var(--primary);font-weight:700}
+  .opt-btn .sub{display:block;font-size:.65rem;opacity:.7;margin-top:2px}
+  .slider-row{display:flex;flex-direction:column;gap:4px}
+  .slider-head{display:flex;justify-content:space-between;font-size:.8rem}
+  .slider-head .name{color:var(--text)}
+  .slider-head .val{color:var(--accent);font-weight:700}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;background:rgba(255,255,255,.1);border-radius:2px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;background:var(--primary);border-radius:50%;cursor:pointer;box-shadow:0 0 8px rgba(255,0,150,.5)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;background:var(--primary);border:none;border-radius:50%;cursor:pointer}
+  .color-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+  .color-sw{aspect-ratio:1/1;border-radius:4px;cursor:pointer;border:2px solid transparent;position:relative;transition:transform .1s}
+  .color-sw:hover{transform:scale(1.1)}
+  .color-sw.active{border-color:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .color-sw.secondary-active{border-color:#ff5ec7;box-shadow:0 0 8px #ff5ec7}
+  .color-sw .surcharge{position:absolute;bottom:1px;right:2px;font-size:7px;color:#fff;font-weight:700;text-shadow:0 0 2px #000}
+  .color-sw .badge-pos{position:absolute;top:1px;left:2px;font-size:9px;color:#fff;font-weight:900;text-shadow:0 0 3px #000;background:rgba(255,0,150,.85);padding:0 4px;border-radius:2px;line-height:1.3}
+  .multi-color-help{font-size:.72rem;color:var(--text-dim);margin-top:4px;line-height:1.4;padding:6px 8px;background:rgba(0,212,255,.05);border-left:2px solid var(--accent);border-radius:3px}
+  .price-box{background:linear-gradient(135deg,rgba(255,0,150,.15),rgba(0,212,255,.05));border:1px solid var(--primary);padding:16px;border-radius:8px}
+  .price-row{display:flex;justify-content:space-between;font-size:.78rem;padding:3px 0;color:var(--text-dim)}
+  .price-row.total{border-top:1px solid rgba(255,0,150,.3);margin-top:8px;padding-top:10px;color:var(--text);font-size:1rem;font-weight:700}
+  .price-row.total .val{font-family:'Orbitron',sans-serif;color:var(--primary);font-size:1.4rem}
+  .quote-btn{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border:none;padding:14px;border-radius:8px;font-family:'Orbitron',sans-serif;font-weight:900;font-size:.95rem;letter-spacing:1.5px;cursor:pointer;transition:transform .1s,box-shadow .2s}
+  .quote-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,0,150,.4)}
+  .download-btn{background:rgba(0,212,255,.08);color:var(--accent);border:1px solid var(--accent);padding:11px;border-radius:8px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:1.5px;cursor:pointer;transition:all .15s;width:100%;margin-top:8px}
+  .download-btn:hover{background:rgba(0,212,255,.18);transform:translateY(-1px)}
+  .download-btn:disabled{opacity:.5;cursor:wait}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--card);border:1px solid var(--primary);border-radius:12px;padding:30px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto}
+  .modal h2{font-family:'Orbitron',sans-serif;color:var(--primary);margin-bottom:16px;font-size:1.3rem}
+  .modal label{display:block;margin-bottom:4px;font-size:.8rem;color:var(--text-dim);letter-spacing:1px}
+  .modal input,.modal textarea{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);color:var(--text);padding:10px;border-radius:6px;margin-bottom:14px;font-family:'Space Mono',monospace;font-size:.9rem}
+  .modal input:focus,.modal textarea:focus{border-color:var(--primary);outline:none}
+  .modal-actions{display:flex;gap:10px}
+  .modal-actions button{flex:1;padding:12px;border:none;border-radius:6px;font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px;cursor:pointer}
+  .btn-cancel{background:rgba(255,255,255,.08);color:var(--text)}
+  .btn-submit{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff}
+  .spec-summary{background:rgba(0,212,255,.05);border-left:3px solid var(--accent);padding:10px 12px;margin-bottom:16px;font-size:.78rem;line-height:1.5;color:var(--text-dim)}
+  .spec-summary b{color:var(--accent)}
+  .success{background:rgba(0,212,255,.1);border:1px solid var(--accent);padding:20px;border-radius:8px;text-align:center;color:var(--accent)}
+  .info-tip{font-size:.7rem;color:var(--text-dim);font-style:italic;margin-top:2px}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">
+      <svg width="36" height="36" viewBox="0 0 512 512" style="vertical-align:middle;margin-right:10px">
+        <polygon points="256,26 455.19,141 455.19,371 256,486 56.81,371 56.81,141" fill="#ff0096"/>
+        <polygon points="256,126 368.56,191 368.56,321 256,386 143.44,321 143.44,191" fill="#00d4ff"/>
+      </svg>
+      <span>DRAGONFRUIT 3D</span>
+    </a>
+    <a href="/" class="back">← BACK TO HOME</a>
+  </div>
+</nav>
+
+<div class="header">
+  <h1>DESIGN YOUR OWN VASE</h1>
+  <p>Customize every detail. See it in 3D. Get an instant price. Then we print it just for you.</p>
+</div>
+
+<div class="studio">
+  <div class="preview">
+    <canvas id="vaseCanvas"></canvas>
+    <div class="dim-display" id="dimDisplay">— · —</div>
+    <div class="preview-overlay">// drag to rotate · scroll to zoom</div>
+  </div>
+  <div class="controls">
+    <div class="ctrl-section">
+      <div class="ctrl-label">// STYLE</div>
+      <div class="grid-2" id="styleGrid">
+        <button class="opt-btn active" data-style="pottery">🏺 Pottery</button>
+        <button class="opt-btn" data-style="twisted">🌀 Twisted</button>
+        <button class="opt-btn" data-style="wave">🌊 Wave</button>
+        <button class="opt-btn" data-style="ribbed">📏 Ribbed</button>
+      </div>
+    </div>
+
+    <div class="ctrl-section" id="paramSection"></div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-label">// SIZE</div>
+      <div class="grid-3" id="sizeGrid">
+        <button class="opt-btn" data-size="0.7">Small<span class="sub">0.7×</span></button>
+        <button class="opt-btn active" data-size="1">Medium<span class="sub">1×</span></button>
+        <button class="opt-btn" data-size="1.4">Large<span class="sub">1.4×</span></button>
+      </div>
+      <div class="slider-row" style="margin-top:8px">
+        <div class="slider-head"><span class="name">Custom scale</span><span class="val" id="val-scale">1.00×</span></div>
+        <input type="range" id="scaleSlider" min="0.5" max="1.4" step="0.05" value="1">
+      </div>
+      <div class="slider-row" style="margin-top:8px">
+        <div class="slider-head"><span class="name">Exact height</span><span class="val" id="val-exactH">18.0cm</span></div>
+        <input type="range" id="exactHSlider" min="6" max="25" step="0.5" value="18">
+      </div>
+      <div class="slider-row">
+        <div class="slider-head"><span class="name">Exact width</span><span class="val" id="val-exactW">7.0cm</span></div>
+        <input type="range" id="exactWSlider" min="3" max="23" step="0.5" value="7">
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-label">// FINISH</div>
+      <div class="grid-2" id="finishGrid">
+        <button class="opt-btn active" data-finish="single">Single color<span class="sub">1 color</span></button>
+        <button class="opt-btn" data-finish="multi">Multi-color (AMS)<span class="sub">2-4 colors + pattern</span></button>
+      </div>
+    </div>
+
+    <div class="ctrl-section" id="patternSection" style="display:none">
+      <div class="ctrl-label">// PATTERN</div>
+      <div class="grid-3" id="patternGrid">
+        <button class="opt-btn active" data-pattern="bands">
+          <svg viewBox="0 0 32 32" width="28" height="28" style="display:block;margin:0 auto 4px;border-radius:3px"><rect x="0" y="0" width="32" height="8" fill="#ff0096"/><rect x="0" y="8" width="32" height="8" fill="#00d4ff"/><rect x="0" y="16" width="32" height="8" fill="#ff0096"/><rect x="0" y="24" width="32" height="8" fill="#00d4ff"/></svg>
+          <span class="sub">Bands</span>
+        </button>
+        <button class="opt-btn" data-pattern="stripes">
+          <svg viewBox="0 0 32 32" width="28" height="28" style="display:block;margin:0 auto 4px;border-radius:3px"><rect x="0" y="0" width="8" height="32" fill="#ff0096"/><rect x="8" y="0" width="8" height="32" fill="#00d4ff"/><rect x="16" y="0" width="8" height="32" fill="#ff0096"/><rect x="24" y="0" width="8" height="32" fill="#00d4ff"/></svg>
+          <span class="sub">Stripes</span>
+        </button>
+        <button class="opt-btn" data-pattern="split">
+          <svg viewBox="0 0 32 32" width="28" height="28" style="display:block;margin:0 auto 4px;border-radius:3px"><rect x="0" y="0" width="32" height="16" fill="#00d4ff"/><rect x="0" y="16" width="32" height="16" fill="#ff0096"/></svg>
+          <span class="sub">Split</span>
+        </button>
+      </div>
+      <div class="slider-row">
+        <div class="slider-head"><span class="name">Number of colors</span><span class="val" id="val-numColors">2</span></div>
+        <input type="range" id="numColorsSlider" min="2" max="4" step="1" value="2">
+      </div>
+      <div class="slider-row" id="sectionsSliderRow">
+        <div class="slider-head"><span class="name" id="sectionsLabel">Number of bands</span><span class="val" id="val-sections">4</span></div>
+        <input type="range" id="sectionsSlider" min="2" max="12" step="1" value="4">
+      </div>
+      <div id="patternHint" style="margin-top:8px;font-size:11px;color:#ff9d00;font-family:'Space Mono',monospace;display:none">// Pick a 2nd color below to see the pattern on the vase ↓</div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-label" id="colorLabel">// COLOR</div>
+      <div class="color-grid" id="colorGrid"></div>
+      <div class="multi-color-help" id="multiColorHelp" style="display:none">Click colors in order. <b>1</b> = primary (bottom or first), <b>2-4</b> = next colors. <i>Tap a numbered color to swap it with #1. To remove a color, lower the slider above.</i></div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-label">// PRICE BREAKDOWN</div>
+      <div class="price-box">
+        <div class="price-row" id="rowMaterial" style="display:none"><span>Material</span><span class="val" id="priceMaterial">$0.00</span></div>
+        <div class="price-row"><span>Print time</span><span class="val" id="priceTime">$0.00</span></div>
+        <div class="price-row"><span>Complexity</span><span class="val" id="priceComplexity">$0.00</span></div>
+        <div class="price-row" id="rowPurge" style="display:none"><span>AMS purge waste</span><span class="val" id="pricePurge">$0.00</span></div>
+        <div class="price-row"><span>Color surcharge</span><span class="val" id="priceColor">$0.00</span></div>
+        <div class="price-row"><span>Failure buffer (5%)</span><span class="val" id="priceFailure">$0.00</span></div>
+        <div class="price-row total"><span>TOTAL</span><span class="val" id="priceTotal">$0.00</span></div>
+      </div>
+      <div class="info-tip" id="weightInfo">~0g · ~0h print time</div>
+    </div>
+
+    <button class="quote-btn" id="quoteBtn">REQUEST CUSTOM PRINT →</button>
+    <!-- Staff-only download button. Visible only when URL has ?staff=1 (e.g. dragonfruit3d.com/customize-vase.html?staff=1) -->
+    <button class="download-btn" id="downloadBtn" style="display:none" title="Staff only: Download a 3MF file you can open in Bambu Studio / Cura / PrusaSlicer. Includes per-color material groups for AMS.">⬇ DOWNLOAD 3MF (STAFF)</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2 id="modalTitle">Request Your Custom Vase</h2>
+    <div id="modalBody">
+      <div class="spec-summary" id="specSummary"></div>
+      <form name="custom-vase" method="POST" data-netlify="true" enctype="multipart/form-data" id="quoteForm">
+        <input type="hidden" name="form-name" value="custom-vase">
+        <input type="hidden" name="vase-spec" id="hiddenSpec">
+        <input type="hidden" name="vase-price" id="hiddenPrice">
+        <!-- Auto-populated with the customer's 3MF before submit. Staff downloads from Netlify Forms dashboard. -->
+        <input type="file" name="vase-3mf" id="hidden3mfInput" style="display:none" accept=".3mf">
+        <label>Your Name</label><input type="text" name="name" required>
+        <label>Email</label><input type="email" name="email" required>
+        <label>Phone (optional)</label><input type="tel" name="phone">
+        <label>Notes / special requests</label><textarea name="notes" rows="3" placeholder="Any extra requests?"></textarea>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" id="cancelBtn">Cancel</button>
+          <button type="submit" class="btn-submit">Send Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden detection form for Netlify. Includes the file field so vase-3mf attachments are accepted on first deploy. -->
+<form name="custom-vase" netlify enctype="multipart/form-data" hidden>
+  <input type="text" name="name"><input type="email" name="email"><input type="tel" name="phone">
+  <input type="text" name="vase-spec"><input type="text" name="vase-price"><textarea name="notes"></textarea>
+  <input type="file" name="vase-3mf">
+</form>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- JSZip for 3MF export (3MF is just a ZIP of XML files) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+const STYLES = {
+  pottery: { label:'Pottery', params:{
+    height:{label:'Height',min:8,max:25,val:18,unit:'cm',step:0.5},
+    bellyWidth:{label:'Belly width',min:3,max:9,val:7,unit:'cm',step:0.5},
+    bellyPos:{label:'Belly position',min:.2,max:.7,val:.4,unit:'',step:.05},
+    neckWidth:{label:'Neck width',min:1.5,max:6,val:3.5,unit:'cm',step:0.5},
+    neckPos:{label:'Neck position',min:.7,max:1,val:1,unit:'',step:.05},
+    baseWidth:{label:'Base width',min:2.5,max:7,val:4.5,unit:'cm',step:0.5},
+  }},
+  twisted: { label:'Twisted', params:{
+    height:{label:'Height',min:8,max:25,val:18,unit:'cm',step:0.5},
+    radius:{label:'Radius',min:2.5,max:8,val:4.5,unit:'cm',step:0.5},
+    sides:{label:'Sides',min:3,max:12,val:6,unit:'',step:1},
+    twist:{label:'Twist',min:0,max:360,val:120,unit:'°',step:10},
+    taper:{label:'Taper',min:-.4,max:.4,val:0,unit:'',step:.05},
+  }},
+  wave: { label:'Wave', params:{
+    height:{label:'Height',min:8,max:25,val:18,unit:'cm',step:0.5},
+    radius:{label:'Radius',min:2.5,max:8,val:4.5,unit:'cm',step:0.5},
+    waves:{label:'Wave count',min:2,max:12,val:6,unit:'',step:1},
+    amplitude:{label:'Wave depth',min:0.1,max:1.2,val:0.5,unit:'cm',step:0.1},
+  }},
+  ribbed: { label:'Ribbed', params:{
+    height:{label:'Height',min:8,max:25,val:18,unit:'cm',step:0.5},
+    radius:{label:'Radius',min:2.5,max:8,val:4.5,unit:'cm',step:0.5},
+    ribs:{label:'Rib count',min:4,max:24,val:12,unit:'',step:1},
+    depth:{label:'Rib depth',min:0.1,max:0.8,val:0.3,unit:'cm',step:0.1},
+  }},
+};
+// Mirrors product-card swatches in index.html exactly (same names, hexes, surcharges, AND order).
+// NOTE: "Gradient" here refers to gradient FILAMENT (a real product) — distinct from the gradient
+// PATTERN that was removed from the customizer (multi-color pattern wasn't AMS-printable).
+// The 3D mesh renders gradient as a representative purple-pink; the swatch UI shows the real gradient.
+const COLORS = [
+  {name:'Yellow',hex:'#FFD700',rgb:[1.0,0.843,0.0],surcharge:0},
+  {name:'Cyan',hex:'#00d4ff',rgb:[0.0,0.831,1.0],surcharge:0},
+  {name:'Purple',hex:'#9D4EDD',rgb:[0.616,0.306,0.867],surcharge:0},
+  {name:'Green',hex:'#00ff9d',rgb:[0.0,1.0,0.616],surcharge:0},
+  {name:'Red',hex:'#FF006E',rgb:[1.0,0.0,0.431],surcharge:0},
+  {name:'Orange',hex:'#FF8C00',rgb:[1.0,0.549,0.0],surcharge:0},
+  {name:'Black',hex:'#1a1a1a',rgb:[0.102,0.102,0.102],surcharge:0},
+  {name:'White',hex:'#FFFFFF',rgb:[1.0,1.0,1.0],surcharge:0},
+  {name:'Brown',hex:'#8B4513',rgb:[0.545,0.271,0.075],surcharge:0},
+  {name:'Ice Blue',hex:'#ADD8E6',rgb:[0.678,0.847,0.902],surcharge:1},
+  {name:'Glow',hex:'#00FFFF',rgb:[0.0,1.0,1.0],surcharge:3},
+  {name:'Gradient',hex:'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',rgb:[0.61,0.39,0.74],surcharge:4,isGradient:true},
+];
+
+const COST = {
+  filamentPerGram: 0.05, printRateGramsPerHr: 15, machineHourly: 2,
+  brimGrams: 2, purgeGramsPerSwap: 1.5, purgeSwapsPerCm: 1.5,
+  failureRate: 0.05, markup: 1.4, setupFee: 3, minOrder: 12,
+};
+
+let state = { 
+  style:'pottery', params:{}, scale: 1, finish: 'single',
+  pattern: 'bands', numColors: 2, sections: 4,
+  colorIdx: 1, secondaryColors: [],  // default = Cyan (matches product default)
+};
+function resetParams(s){ state.params={}; for(const[k,v] of Object.entries(STYLES[s].params)) state.params[k]=v.val; }
+resetParams('pottery');
+
+function scaledP() {
+  const p = {};
+  const linearKeys = ['height','bellyWidth','neckWidth','baseWidth','radius','amplitude','depth'];
+
+  // P1S hard limit: never produce a vase bigger than 25cm tall × 23cm wide,
+  // no matter what slider combo the user picks. Compute max allowable scale:
+  const baseHeight = state.params.height || 1;
+  let baseWidth;
+  if (state.style === 'pottery') {
+    baseWidth = Math.max(state.params.bellyWidth || 0, state.params.neckWidth || 0, state.params.baseWidth || 0);
+  } else if (state.style === 'twisted') {
+    baseWidth = (state.params.radius || 0) * 2 * (1 + Math.abs(state.params.taper || 0));
+  } else if (state.style === 'wave') {
+    baseWidth = ((state.params.radius || 0) + (state.params.amplitude || 0)) * 2;
+  } else {
+    baseWidth = ((state.params.radius || 0) + (state.params.depth || 0)) * 2;
+  }
+  const maxScaleH = 25 / baseHeight;
+  const maxScaleW = baseWidth > 0 ? 23 / baseWidth : 999;
+  const safeScale = Math.min(state.scale, maxScaleH, maxScaleW);
+
+  for (const [k,v] of Object.entries(state.params)) {
+    p[k] = linearKeys.includes(k) ? v * safeScale : v;
+  }
+  return p;
+}
+
+const canvas = document.getElementById('vaseCanvas');
+const scene = new THREE.Scene(); scene.background = null;
+const camera = new THREE.PerspectiveCamera(40,1,.1,2000);
+const renderer = new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(window.devicePixelRatio);
+function resizeRenderer(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+window.addEventListener('resize',resizeRenderer);
+
+// Neutral lighting — keeps colors accurate. Mostly ambient so true color shows.
+scene.add(new THREE.HemisphereLight(0xffffff, 0xc0c0c0, 1.1));
+const keyLight = new THREE.DirectionalLight(0xffffff, 0.25);
+keyLight.position.set(120, 200, 100);
+scene.add(keyLight);
+
+const floor=new THREE.Mesh(new THREE.CircleGeometry(180,64),new THREE.MeshBasicMaterial({color:0x1a0a2e,transparent:true,opacity:.35}));
+floor.rotation.x=-Math.PI/2; floor.position.y = -0.5; scene.add(floor);
+
+// Faint cm grid on floor for scale reference
+const gridHelper = new THREE.GridHelper(300, 30, 0x4a3060, 0x2a1840);
+gridHelper.position.y = -0.4;
+gridHelper.material.opacity = 0.35;
+gridHelper.material.transparent = true;
+scene.add(gridHelper);
+
+let vaseMesh=null;
+
+// Geometry builders — return { geometry, vertexCount } where vertices are organized so
+// we can color them by Y or angle for multi-color patterns.
+// forPrint=true: drop the cosmetic top lip (creates slicer "floating cantilever" overhang).
+// Bottom center is always r=0 (closed disc, no hole) — same in viewer and print.
+function buildPottery(p, forPrint){
+  const h=p.height*10, bW=p.bellyWidth*10, nW=p.neckWidth*10, baW=p.baseWidth*10;
+  const segs=80; const points=[];
+  // Start at the axis (r=0) so the lathe creates a fully closed bottom disc — no center hole.
+  points.push(new THREE.Vector2(0, 0));
+  for(let i=0;i<=segs;i++){
+    const t=i/segs, y=t*h;
+    let r;
+    // Curve: base → belly (eased out) → neck (eased in), reaching neck width at t=neckPos.
+    // Above neckPos the profile holds at neck width (straight-top neck). neckPos=1 keeps old behavior.
+    const neckPos = (p.neckPos != null) ? p.neckPos : 1;
+    if(t===0) r=baW/2;
+    else if(t<p.bellyPos){
+      const lt=t/p.bellyPos, eased=1-Math.pow(1-lt,2);
+      r=baW/2+(bW/2-baW/2)*eased;
+    } else if(t<neckPos){
+      const span=Math.max(0.0001, neckPos-p.bellyPos);
+      const lt=(t-p.bellyPos)/span, eased=Math.pow(lt,1.5);
+      r=bW/2+(nW/2-bW/2)*eased;
+    } else {
+      r=nW/2;
+    }
+    points.push(new THREE.Vector2(r,y));
+  }
+  // Cosmetic top "lip" — skip it for print exports (it creates an outward overhang the slicer flags as a floating cantilever)
+  if (!forPrint) {
+    const last=points[points.length-1];
+    points.push(new THREE.Vector2(last.x*1.05,last.y+2));
+  }
+  // Bump angular resolution when many stripes are active so stripe boundaries stay sharp
+  // (each stripe = lathe-segments / sections, so we want plenty of segments per stripe).
+  const stripeBoost = (state.pattern === 'stripes' && state.finish === 'multi') ? state.sections * 24 : 0;
+  const lathSegs = Math.max(96, stripeBoost);
+  return new THREE.LatheGeometry(points, lathSegs);
+}
+function buildExtruded(heightMM, radialFn, segCount, radCount){
+  const segments=segCount, radial=radCount;
+  const g=new THREE.BufferGeometry(); const positions=[],indices=[];
+  for(let i=0;i<=segments;i++){
+    const t=i/segments, y=t*heightMM;
+    for(let j=0;j<radial;j++){
+      const angle=(j/radial)*Math.PI*2;
+      const r=radialFn(angle,t);
+      positions.push(Math.cos(angle)*r, y, Math.sin(angle)*r);
+    }
+  }
+  for(let i=0;i<segments;i++){
+    for(let j=0;j<radial;j++){
+      const a=i*radial+j, b=i*radial+((j+1)%radial), c=(i+1)*radial+j, d=(i+1)*radial+((j+1)%radial);
+      indices.push(a,b,d,a,d,c);
+    }
+  }
+  const cb=positions.length/3; positions.push(0,0,0);
+  for(let j=0;j<radial;j++) indices.push(cb,(j+1)%radial,j);
+  // NO TOP CAP — leaves an open top so two-layer rendering shows the hollow interior
+  g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  g.setIndex(indices); g.computeVertexNormals(); return g;
+}
+function buildTwistedPoly(p){
+  const sides=Math.round(p.sides), h=p.height*10, rad=p.radius*10;
+  const segments=Math.max(40,Math.round(h/4));
+  const g=new THREE.BufferGeometry(); const positions=[],indices=[];
+  for(let i=0;i<=segments;i++){
+    const t=i/segments, y=t*h;
+    const twistRad=(p.twist*Math.PI/180)*t;
+    const taper=1+p.taper*t;
+    for(let j=0;j<sides;j++){
+      const angle=(j/sides)*Math.PI*2+twistRad;
+      const r=rad*taper;
+      positions.push(Math.cos(angle)*r, y, Math.sin(angle)*r);
+    }
+  }
+  for(let i=0;i<segments;i++){
+    for(let j=0;j<sides;j++){
+      const a=i*sides+j, b=i*sides+((j+1)%sides), c=(i+1)*sides+j, d=(i+1)*sides+((j+1)%sides);
+      indices.push(a,b,d,a,d,c);
+    }
+  }
+  const cb=positions.length/3; positions.push(0,0,0);
+  for(let j=0;j<sides;j++) indices.push(cb,(j+1)%sides,j);
+  // NO TOP CAP — leaves an open top so two-layer rendering shows the hollow interior
+  g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  g.setIndex(indices); g.computeVertexNormals(); return g;
+}
+// Same rationale as buildPottery: bump radial segments when stripes pattern is active so
+// stripe boundaries don't fall on a single fat triangle face.
+function stripeRadial(base){
+  if (state.pattern === 'stripes' && state.finish === 'multi') {
+    return Math.max(base, state.sections * 24);
+  }
+  return base;
+}
+function buildWave(p){
+  const h=p.height*10, rad=p.radius*10, amp=p.amplitude*10;
+  return buildExtruded(h, (angle,t)=>rad+Math.sin(t*Math.PI*p.waves)*amp, 80, stripeRadial(96));
+}
+function buildRibbed(p){
+  const h=p.height*10, rad=p.radius*10, dep=p.depth*10;
+  return buildExtruded(h, (angle,t)=>{
+    const ribMod=Math.cos(angle*Math.round(p.ribs))*.5+.5;
+    return rad+ribMod*dep;
+  }, 60, stripeRadial(Math.max(48,Math.round(p.ribs)*6)));
+}
+
+// Apply multi-color pattern via PER-FACE colors (sharp boundaries — no interpolation zigzag).
+// We expand the indexed geometry to non-indexed so every triangle has its own 3 vertices,
+// then set all 3 to the SAME color computed from the triangle's centroid. The result is
+// flat per-face colors with crisp stripe/band boundaries. Returns the (possibly new) geometry.
+function applyColorPattern(geometry) {
+  // Step 1: non-index so each face owns its vertices.
+  let geo = geometry.index ? geometry.toNonIndexed() : geometry;
+  const positions = geo.getAttribute('position');
+  const count = positions.count;            // multiple of 3 (one face per 3 verts)
+  const colors = new Float32Array(count * 3);
+
+  // Y range for height normalization.
+  let minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i < count; i++) {
+    const y = positions.getY(i);
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
+  const yRange = maxY - minY;
+
+  // Active color list: primary + chosen secondaries, capped to numColors slots.
+  const activeColors = [COLORS[state.colorIdx].rgb];
+  for (let i = 0; i < state.numColors - 1; i++) {
+    activeColors.push(
+      state.secondaryColors[i] !== undefined
+        ? COLORS[state.secondaryColors[i]].rgb
+        : COLORS[state.colorIdx].rgb
+    );
+  }
+  const N = activeColors.length;
+
+  // Step 2: iterate per face (3 verts at a time), pick one color from the centroid, paint all 3.
+  for (let f = 0; f < count; f += 3) {
+    const x0 = positions.getX(f), y0 = positions.getY(f), z0 = positions.getZ(f);
+    const x1 = positions.getX(f+1), y1 = positions.getY(f+1), z1 = positions.getZ(f+1);
+    const x2 = positions.getX(f+2), y2 = positions.getY(f+2), z2 = positions.getZ(f+2);
+    const cx = (x0+x1+x2)/3, cy = (y0+y1+y2)/3, cz = (z0+z1+z2)/3;
+    const t = yRange > 0 ? (cy - minY) / yRange : 0;
+    let c;
+    if (state.finish === 'single') {
+      c = COLORS[state.colorIdx].rgb;
+    } else if (state.pattern === 'bands') {
+      const S = Math.max(2, state.sections|0);
+      const bandIdx = Math.min(S - 1, Math.floor(t * S));
+      c = activeColors[bandIdx % N];
+    } else if (state.pattern === 'stripes') {
+      const S = Math.max(2, state.sections|0);
+      const angle = Math.atan2(cz, cx);
+      const normalized = (angle + Math.PI) / (2 * Math.PI);
+      const stripeIdx = Math.min(S - 1, Math.floor(normalized * S));
+      c = activeColors[stripeIdx % N];
+    } else if (state.pattern === 'split') {
+      c = t < 0.5 ? activeColors[0] : (activeColors[1] || activeColors[0]);
+    } else {
+      c = activeColors[0];
+    }
+    colors[f*3]   = c[0]; colors[f*3+1] = c[1]; colors[f*3+2] = c[2];
+    colors[f*3+3] = c[0]; colors[f*3+4] = c[1]; colors[f*3+5] = c[2];
+    colors[f*3+6] = c[0]; colors[f*3+7] = c[1]; colors[f*3+8] = c[2];
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  return geo;
+}
+
+function buildVase(){
+  let geo; const p=scaledP();
+  switch(state.style){
+    case 'pottery': geo=buildPottery(p); break;
+    case 'twisted': geo=buildTwistedPoly(p); break;
+    case 'wave': geo=buildWave(p); break;
+    case 'ribbed': geo=buildRibbed(p); break;
+  }
+  geo = applyColorPattern(geo);  // may swap to non-indexed copy for sharp per-face colors
+
+  // TWO-LAYER RENDERING (v27 — outer is FrontSide to kill stripe "razor slivers"):
+  // Outer was DoubleSide which made the inside of the back wall render through the open top —
+  // those visible stripes 180° offset showed up as razor-thin slivers. FrontSide hides them;
+  // through the top opening you now see only the darker inner mesh = clean hollow look.
+  // Verified twisted/wave/ribbed don't develop missing-face artifacts since all our builders
+  // generate consistent CCW winding.
+  const matOuter = new THREE.MeshLambertMaterial({
+    vertexColors: true,
+    side: THREE.FrontSide,
+  });
+  const meshOuter = new THREE.Mesh(geo, matOuter);
+
+  const innerGeo = geo.clone();
+  const origColors = geo.attributes.color.array;
+  const darkColors = new Float32Array(origColors.length);
+  for (let i = 0; i < origColors.length; i++) {
+    darkColors[i] = origColors[i] * 0.4; // 40% brightness for interior shadow
+  }
+  innerGeo.setAttribute('color', new THREE.BufferAttribute(darkColors, 3));
+  const matInner = new THREE.MeshLambertMaterial({
+    vertexColors: true,
+    side: THREE.BackSide,
+  });
+  const meshInner = new THREE.Mesh(innerGeo, matInner);
+  // Properly contain the inner mesh INSIDE the outer mesh:
+  // - 93% in X/Z so it's narrower
+  // - Scale Y so inner is 6mm shorter than outer, then lift 3mm so there's
+  //   a 3mm gap at BOTH top and bottom (no z-fight anywhere, no protrusion)
+  geo.computeBoundingBox();
+  const heightMM = geo.boundingBox.max.y - geo.boundingBox.min.y;
+  const gap = 3; // mm gap at top and bottom
+  meshInner.scale.set(0.93, Math.max(0.5, (heightMM - 2 * gap) / heightMM), 0.93);
+  meshInner.position.y = gap;
+
+  // Cleanup old vase
+  if (vaseMesh) {
+    scene.remove(vaseMesh);
+    if (vaseMesh.children && vaseMesh.children.length) {
+      vaseMesh.children.forEach(c => {
+        if (c.geometry) c.geometry.dispose();
+        if (c.material) c.material.dispose();
+      });
+    } else if (vaseMesh.geometry) {
+      vaseMesh.geometry.dispose();
+      vaseMesh.material.dispose();
+    }
+  }
+
+  const group = new THREE.Group();
+  group.add(meshOuter);
+  group.add(meshInner);
+  vaseMesh = group;
+  scene.add(vaseMesh);
+
+  updatePrice();
+  updateDimensions();
+  if (typeof syncExactSliders === 'function') syncExactSliders();
+  // Show pattern hint if multi-color but no secondary colors picked
+  const hintEl = document.getElementById('patternHint');
+  if (hintEl) {
+    hintEl.style.display = (state.finish === 'multi' && state.secondaryColors.length === 0) ? 'block' : 'none';
+  }
+  // Show sections slider only for bands and stripes (split is always 2)
+  const sliderRow = document.getElementById('sectionsSliderRow');
+  const sliderLabel = document.getElementById('sectionsLabel');
+  if (sliderRow && sliderLabel) {
+    if (state.pattern === 'split' || state.finish !== 'multi') {
+      sliderRow.style.display = 'none';
+    } else {
+      sliderRow.style.display = '';
+      sliderLabel.textContent = state.pattern === 'stripes' ? 'Number of stripes' : 'Number of bands';
+    }
+  }
+}
+
+function updateDimensions(){
+  const p=scaledP();
+  let widthCm, heightCm;
+  if(state.style==='pottery'){
+    widthCm = Math.max(p.bellyWidth, p.neckWidth, p.baseWidth);
+    heightCm = p.height;
+  } else if(state.style==='twisted'){
+    widthCm = p.radius * 2 * (1 + Math.abs(p.taper));
+    heightCm = p.height;
+  } else if(state.style==='wave'){
+    widthCm = (p.radius + p.amplitude) * 2;
+    heightCm = p.height;
+  } else {
+    widthCm = (p.radius + p.depth) * 2;
+    heightCm = p.height;
+  }
+  const fitsP1S = (heightCm <= 25) && (widthCm <= 23);
+  const warn = fitsP1S
+    ? ''
+    : ` · <span style="color:#ff9d00">⚠ exceeds P1S (max 25×23cm)</span>`;
+  document.getElementById('dimDisplay').innerHTML = 
+    `<span class="v">${heightCm.toFixed(1)}</span>cm tall · <span class="v">${widthCm.toFixed(1)}</span>cm wide${warn}`;
+}
+
+function estimateVolume(){
+  const p = scaledP();
+  let avgR_cm, h_cm;
+  if(state.style==='pottery'){ avgR_cm=(p.bellyWidth/2+p.neckWidth/2+p.baseWidth/2)/3; h_cm=p.height; }
+  else if(state.style==='twisted'){ avgR_cm=p.radius*(1+p.taper/2); h_cm=p.height; }
+  else { avgR_cm=p.radius; h_cm=p.height; }
+  const wall_cm = 0.15;
+  const shellArea = 2*Math.PI*avgR_cm*h_cm + Math.PI*avgR_cm*avgR_cm;
+  return shellArea * wall_cm;
+}
+function complexityFactor(){
+  const p=state.params;
+  switch(state.style){
+    case 'pottery': return 1;
+    case 'twisted': return (1+(p.twist/360)*.5)*(1+(12-p.sides)*.03);
+    case 'wave': return 1+(p.waves/12)*.4+(p.amplitude/1.2)*.3;
+    case 'ribbed': return 1+(p.ribs/24)*.3+(p.depth/0.8)*.2;
+  } return 1;
+}
+function updatePrice(){
+  const grams = estimateVolume() * 1.24;
+  const matCost = (grams + COST.brimGrams) * COST.filamentPerGram;
+  const hours = (grams + COST.brimGrams) / COST.printRateGramsPerHr;
+  const timeCost = hours * COST.machineHourly;
+  const cFactor = complexityFactor();
+  const compCost = (matCost + timeCost) * (cFactor - 1);
+  
+  let purgeCost = 0;
+  if (state.finish === 'multi') {
+    // Charge for ACTUAL distinct colors the user picked, not the slot count.
+    // If they set numColors=4 but only chose 2 colors, only 1 swap of waste — not 3.
+    const distinctColors = 1 + Math.min(state.secondaryColors.length, state.numColors - 1);
+    const swapCount = Math.max(0, distinctColors - 1);
+    const swaps = swapCount * COST.purgeSwapsPerCm * scaledP().height;
+    const purgeGrams = swaps * COST.purgeGramsPerSwap;
+    purgeCost = purgeGrams * COST.filamentPerGram +
+                (purgeGrams / COST.printRateGramsPerHr * COST.machineHourly) +
+                (swapCount > 0 ? 3 : 0);
+  }
+  
+  let colorSur = COLORS[state.colorIdx].surcharge;
+  if (state.finish === 'multi') {
+    state.secondaryColors.slice(0, state.numColors - 1).forEach(idx => {
+      colorSur += COLORS[idx].surcharge;
+    });
+  }
+  
+  const baseCosts = matCost + timeCost + compCost + purgeCost;
+  const failureBuffer = baseCosts * COST.failureRate;
+  const subtotal = (baseCosts + failureBuffer + colorSur) * COST.markup + COST.setupFee;
+  const total = Math.max(COST.minOrder, subtotal);
+  
+  document.getElementById('priceMaterial').textContent = '$'+matCost.toFixed(2);
+  document.getElementById('priceTime').textContent = '$'+timeCost.toFixed(2);
+  document.getElementById('priceComplexity').textContent = '$'+compCost.toFixed(2);
+  document.getElementById('priceColor').textContent = colorSur ? '+$'+colorSur.toFixed(2) : '$0.00';
+  document.getElementById('priceFailure').textContent = '$'+failureBuffer.toFixed(2);
+  document.getElementById('priceTotal').textContent = '$'+total.toFixed(2);
+  document.getElementById('rowPurge').style.display = state.finish === 'multi' ? '' : 'none';
+  document.getElementById('pricePurge').textContent = '$'+purgeCost.toFixed(2);
+  document.getElementById('weightInfo').textContent = `~${grams.toFixed(0)}g · ~${hours.toFixed(1)}h print time`;
+  state.totalPrice = total; state.estimatedGrams = grams; state.estimatedHours = hours;
+}
+
+function buildSliders(){
+  const c=document.getElementById('paramSection');
+  c.innerHTML='<div class="ctrl-label">// SHAPE PARAMETERS (cm)</div>';
+  for(const[key,def] of Object.entries(STYLES[state.style].params)){
+    const row=document.createElement('div'); row.className='slider-row';
+    row.innerHTML=`<div class="slider-head"><span class="name">${def.label}</span><span class="val" id="val-${key}"></span></div>`;
+    const slider=document.createElement('input'); slider.type='range';
+    slider.min=def.min; slider.max=def.max; slider.step=def.step||1; slider.value=state.params[key];
+    slider.addEventListener('input',e=>{
+      state.params[key]=parseFloat(e.target.value);
+      updateSliderLabel(key, def);
+      buildVase();
+    });
+    row.appendChild(slider); c.appendChild(row);
+    updateSliderLabel(key, def);
+  }
+}
+function updateSliderLabel(key, def) {
+  const v = state.params[key];
+  const display = (def.step && def.step < 1) ? v.toFixed(2) : Math.round(v);
+  document.getElementById('val-'+key).textContent = display + (def.unit||'');
+}
+
+function updateColorLabel(){
+  const label = document.getElementById('colorLabel');
+  const primary = COLORS[state.colorIdx];
+  const primaryStr = primary.name + (primary.surcharge ? ` (+$${primary.surcharge})` : '');
+  if (state.finish !== 'multi') {
+    label.innerHTML = `// COLOR — <span style="color:var(--primary);font-weight:700">${primaryStr}</span>`;
+    return;
+  }
+  const names = [primaryStr].concat(state.secondaryColors.map(i => {
+    const c = COLORS[i];
+    return c.name + (c.surcharge ? ` (+$${c.surcharge})` : '');
+  }));
+  label.innerHTML = `// COLORS — <span style="color:var(--primary);font-weight:700">${names.join(', ')}</span>`;
+}
+
+function buildColorGrid(){
+  const g=document.getElementById('colorGrid'); g.innerHTML='';
+  updateColorLabel();
+  COLORS.forEach((c,i)=>{
+    const sw=document.createElement('div');
+    sw.className='color-sw';
+    if (i === state.colorIdx) sw.classList.add('active');
+    if (state.finish === 'multi') {
+      const secIdx = state.secondaryColors.indexOf(i);
+      if (secIdx !== -1 && secIdx < state.numColors - 1) {
+        sw.classList.add('secondary-active');
+        const badge=document.createElement('span'); badge.className='badge-pos'; badge.textContent=secIdx+2;
+        sw.appendChild(badge);
+      }
+      if (i === state.colorIdx) {
+        const badge=document.createElement('span'); badge.className='badge-pos'; badge.textContent='1';
+        sw.appendChild(badge);
+      }
+    }
+    // Gradient swatch uses the CSS gradient string; solid colors use the hex.
+    sw.style.background = c.hex;
+    sw.title = c.name + (c.surcharge ? ` (+$${c.surcharge})` : '');
+    if(c.surcharge){ const s=document.createElement('span'); s.className='surcharge'; s.textContent='+$'+c.surcharge; sw.appendChild(s); }
+    sw.addEventListener('click',()=>handleColorClick(i));
+    g.appendChild(sw);
+  });
+}
+function handleColorClick(i) {
+  if (state.finish !== 'multi') {
+    state.colorIdx = i;
+  } else {
+    // Click primary (1) → no-op (already the primary).
+    if (i === state.colorIdx) return;
+    const secIdx = state.secondaryColors.indexOf(i);
+    if (secIdx !== -1) {
+      // Click a numbered secondary → SWAP it with primary so user can promote any color to #1.
+      // (To remove a color from the mix entirely, lower the "Number of colors" slider.)
+      const oldPrimary = state.colorIdx;
+      state.colorIdx = i;
+      state.secondaryColors[secIdx] = oldPrimary;
+    } else {
+      // New color → add as next secondary if there's room
+      if (state.secondaryColors.length >= state.numColors - 1) {
+        flashMaxHint();
+        return;
+      }
+      state.secondaryColors.push(i);
+    }
+  }
+  buildColorGrid();
+  buildVase();
+}
+
+let _hintTimer = null;
+function flashMaxHint() {
+  let el = document.getElementById('color-hint');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'color-hint';
+    el.style.cssText = 'margin-top:6px;font-size:11px;color:#ff9d00;font-family:"Space Mono",monospace;';
+    el.textContent = '// Max colors reached — remove one or raise "Number of colors"';
+    document.getElementById('patternSection').appendChild(el);
+  }
+  el.style.display = 'block';
+  clearTimeout(_hintTimer);
+  _hintTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
+}
+
+document.getElementById('styleGrid').addEventListener('click',e=>{
+  const btn = e.target.closest('[data-style]'); if(!btn) return;
+  document.querySelectorAll('#styleGrid .opt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  state.style=btn.dataset.style;
+  resetParams(state.style); buildSliders(); buildVase();
+});
+document.getElementById('sizeGrid').addEventListener('click',e=>{
+  const btn = e.target.closest('[data-size]'); if(!btn) return;
+  document.querySelectorAll('#sizeGrid .opt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  state.scale = parseFloat(btn.dataset.size);
+  document.getElementById('scaleSlider').value = state.scale;
+  document.getElementById('val-scale').textContent = state.scale.toFixed(2)+'×';
+  buildVase();
+});
+document.getElementById('scaleSlider').addEventListener('input',e=>{
+  state.scale = parseFloat(e.target.value);
+  document.getElementById('val-scale').textContent = state.scale.toFixed(2)+'×';
+  document.querySelectorAll('#sizeGrid .opt-btn').forEach(b=>b.classList.remove('active'));
+  syncExactSliders();
+  buildVase();
+});
+
+// Direct height/width sliders — set the underlying shape parameter directly, reset scale to 1
+function widthParamKey() {
+  return state.style === 'pottery' ? 'bellyWidth' : 'radius';
+}
+function widthIsDiameter() { return state.style !== 'pottery'; }
+
+document.getElementById('exactHSlider').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  state.params.height = Math.min(STYLES[state.style].params.height.max,
+                                 Math.max(STYLES[state.style].params.height.min, v));
+  state.scale = 1;
+  document.getElementById('val-exactH').textContent = v.toFixed(1) + 'cm';
+  document.getElementById('val-scale').textContent = '1.00×';
+  document.getElementById('scaleSlider').value = 1;
+  document.querySelectorAll('#sizeGrid .opt-btn').forEach(b=>b.classList.remove('active'));
+  buildSliders();
+  buildVase();
+});
+document.getElementById('exactWSlider').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  const key = widthParamKey();
+  const targetParam = widthIsDiameter() ? v / 2 : v;
+  const def = STYLES[state.style].params[key];
+  state.params[key] = Math.min(def.max, Math.max(def.min, targetParam));
+  state.scale = 1;
+  document.getElementById('val-exactW').textContent = v.toFixed(1) + 'cm';
+  document.getElementById('val-scale').textContent = '1.00×';
+  document.getElementById('scaleSlider').value = 1;
+  document.querySelectorAll('#sizeGrid .opt-btn').forEach(b=>b.classList.remove('active'));
+  buildSliders();
+  buildVase();
+});
+
+// Keep the exact sliders in sync when other controls change
+function syncExactSliders() {
+  const h = state.params.height * state.scale;
+  const wKey = widthParamKey();
+  const wRaw = (state.params[wKey] || 0) * state.scale;
+  const w = widthIsDiameter() ? wRaw * 2 : wRaw;
+  document.getElementById('exactHSlider').value = Math.min(35, Math.max(6, h));
+  document.getElementById('exactWSlider').value = Math.min(18, Math.max(3, w));
+  document.getElementById('val-exactH').textContent = h.toFixed(1) + 'cm';
+  document.getElementById('val-exactW').textContent = w.toFixed(1) + 'cm';
+}
+document.getElementById('finishGrid').addEventListener('click',e=>{
+  const btn = e.target.closest('[data-finish]'); if(!btn) return;
+  document.querySelectorAll('#finishGrid .opt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  state.finish = btn.dataset.finish;
+  state.secondaryColors = [];
+  document.getElementById('patternSection').style.display = state.finish === 'multi' ? '' : 'none';
+  document.getElementById('multiColorHelp').style.display = state.finish === 'multi' ? '' : 'none';
+  buildColorGrid();  // also refreshes the selected-color label
+  buildVase();
+});
+document.getElementById('patternGrid').addEventListener('click',e=>{
+  const btn = e.target.closest('[data-pattern]'); if(!btn) return;
+  document.querySelectorAll('#patternGrid .opt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  state.pattern = btn.dataset.pattern;
+  buildVase();
+});
+document.getElementById('numColorsSlider').addEventListener('input',e=>{
+  state.numColors = parseInt(e.target.value);
+  document.getElementById('val-numColors').textContent = state.numColors;
+  if (state.secondaryColors.length > state.numColors - 1) {
+    state.secondaryColors = state.secondaryColors.slice(0, state.numColors - 1);
+  }
+  buildColorGrid();
+  buildVase();
+});
+document.getElementById('sectionsSlider').addEventListener('input',e=>{
+  state.sections = parseInt(e.target.value);
+  document.getElementById('val-sections').textContent = state.sections;
+  buildVase();
+});
+
+// Camera — NO auto-rotate. User drag/touch only. Better default angle.
+let isDragging=false,prevX=0,prevY=0;
+let camAngleY=Math.PI/4, camAngleX=1.15, camDist=380;
+function updateCamera(){
+  const cy=Math.cos(camAngleX)*camDist, rad=Math.sin(camAngleX)*camDist;
+  const focusY = (state.params.height || 18) * state.scale * 10 / 2;
+  camera.position.set(Math.cos(camAngleY)*rad, cy+focusY, Math.sin(camAngleY)*rad);
+  camera.lookAt(0, focusY, 0);
+}
+canvas.addEventListener('mousedown',e=>{isDragging=true;prevX=e.clientX;prevY=e.clientY;});
+window.addEventListener('mouseup',()=>{isDragging=false;});
+window.addEventListener('mousemove',e=>{if(!isDragging)return;const dx=e.clientX-prevX,dy=e.clientY-prevY;prevX=e.clientX;prevY=e.clientY;camAngleY-=dx*.01;camAngleX-=dy*.01;updateCamera();});
+canvas.addEventListener('wheel',e=>{e.preventDefault();camDist=Math.max(150,Math.min(800,camDist+e.deltaY*.5));updateCamera();},{passive:false});
+canvas.addEventListener('touchstart',e=>{if(e.touches.length===1){isDragging=true;prevX=e.touches[0].clientX;prevY=e.touches[0].clientY;}});
+canvas.addEventListener('touchend',()=>{isDragging=false;});
+canvas.addEventListener('touchmove',e=>{if(!isDragging||e.touches.length!==1)return;e.preventDefault();const dx=e.touches[0].clientX-prevX,dy=e.touches[0].clientY-prevY;prevX=e.touches[0].clientX;prevY=e.touches[0].clientY;camAngleY-=dx*.01;camAngleX-=dy*.01;updateCamera();},{passive:false});
+
+function animate(){requestAnimationFrame(animate);renderer.render(scene,camera);}
+
+const modal=document.getElementById('modalBg');
+document.getElementById('quoteBtn').addEventListener('click',()=>{
+  const p=state.params;
+  const lines=[`<b>Style:</b> ${STYLES[state.style].label}`,
+    ...Object.entries(p).map(([k,v])=>{const d=STYLES[state.style].params[k];return `<b>${d.label}:</b> ${(d.step&&d.step<1)?v.toFixed(2):Math.round(v*100)/100}${d.unit||''}`;}),
+    `<b>Scale:</b> ${state.scale.toFixed(2)}×`,
+    `<b>Finish:</b> ${state.finish === 'single' ? 'Single color' : `Multi-color · ${state.pattern} pattern · ${state.numColors} colors`}`,
+    `<b>Primary color:</b> ${COLORS[state.colorIdx].name}`,
+  ];
+  if (state.finish === 'multi' && state.secondaryColors.length) {
+    lines.push(`<b>Other colors:</b> ${state.secondaryColors.slice(0,state.numColors-1).map(i=>COLORS[i].name).join(', ')}`);
+  }
+  lines.push(
+    `<b>Estimated weight:</b> ~${state.estimatedGrams.toFixed(0)}g`,
+    `<b>Estimated print time:</b> ~${state.estimatedHours.toFixed(1)}h`,
+    `<b>Total price:</b> $${state.totalPrice.toFixed(2)} SGD`
+  );
+  document.getElementById('specSummary').innerHTML=lines.join('<br>');
+  document.getElementById('hiddenSpec').value=JSON.stringify({
+    style:state.style, params:state.params, scale:state.scale, finish:state.finish,
+    pattern:state.finish==='multi'?state.pattern:null,
+    numColors:state.finish==='multi'?state.numColors:1,
+    primaryColor:COLORS[state.colorIdx].name,
+    secondaryColors:state.finish==='multi'?state.secondaryColors.slice(0,state.numColors-1).map(i=>COLORS[i].name):[],
+    estGrams:state.estimatedGrams.toFixed(0), estHours:state.estimatedHours.toFixed(1),
+  },null,2);
+  document.getElementById('hiddenPrice').value='$'+state.totalPrice.toFixed(2);
+  modal.classList.add('show');
+});
+document.getElementById('cancelBtn').addEventListener('click',()=>modal.classList.remove('show'));
+modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('show');});
+// On every "Request Custom Print" click we kick off background 3MF generation and stash the blob.
+// The actual file input gets populated just before submit so the file rides along with the form post.
+let _pendingVase3mfBlob = null;
+let _pendingVase3mfReady = false;
+async function _prepareVase3mfForSubmit() {
+  _pendingVase3mfReady = false;
+  _pendingVase3mfBlob = null;
+  try {
+    _pendingVase3mfBlob = await build3MFBlob();
+    _pendingVase3mfReady = true;
+  } catch (err) {
+    console.warn('[3MF] background generation failed:', err);
+  }
+}
+// Re-prepare every time the quote modal opens so it matches the latest geometry.
+document.getElementById('quoteBtn').addEventListener('click', () => { _prepareVase3mfForSubmit(); });
+
+document.getElementById('quoteForm').addEventListener('submit', (e) => {
+  // If 3MF didn't finish in time, hold the submit briefly and try once.
+  if (!_pendingVase3mfReady) {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('.btn-submit');
+    const origText = submitBtn.textContent;
+    submitBtn.textContent = 'Preparing file…'; submitBtn.disabled = true;
+    _prepareVase3mfForSubmit().finally(() => {
+      submitBtn.textContent = origText; submitBtn.disabled = false;
+      // Try the submit again now that the blob is (hopefully) ready
+      e.target.requestSubmit ? e.target.requestSubmit() : e.target.submit();
+    });
+    return;
+  }
+  // Attach the 3MF blob as a real File on the hidden file input via DataTransfer.
+  if (_pendingVase3mfBlob) {
+    try {
+      const styleLabel = state.style;
+      const colorLabel = COLORS[state.colorIdx].name.toLowerCase().replace(/\s+/g, '-');
+      const filename = `vase-${styleLabel}-${colorLabel}-${Date.now()}.3mf`;
+      const file = new File([_pendingVase3mfBlob], filename, { type: 'model/3mf' });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      document.getElementById('hidden3mfInput').files = dt.files;
+    } catch (err) {
+      console.warn('[3MF] attach failed (form will submit without file):', err);
+    }
+  }
+  setTimeout(() => {
+    document.getElementById('modalBody').innerHTML = `<div class="success"><h3 style="font-family:Orbitron;margin-bottom:8px">REQUEST SENT 🎉</h3><p>Thanks! We'll review your custom vase and email you within 24 hours.</p><button class="btn-cancel" style="margin-top:18px;padding:10px 18px;border:none;border-radius:6px;cursor:pointer" onclick="document.getElementById('modalBg').classList.remove('show');location.reload()">Done</button></div>`;
+  }, 100);
+});
+
+// =====================================================================
+// 3MF EXPORT (v28) — produces a standard Materials-extension 3MF file
+// that opens cleanly in Bambu Studio, PrusaSlicer, Cura. Per-face base
+// materials → manual AMS slot mapping is one click per color in Studio.
+// Coordinate transform: Three.js is Y-up; 3D printers / slicers expect
+// Z-up. We rotate 90° around X so the vase sits upright on the bed.
+//   (x, y, z) → (x, -z, y)        — handedness preserved (no winding flip)
+// =====================================================================
+function _rgb01ToHex(rgb){
+  const h = v => Math.max(0, Math.min(255, Math.round(v * 255))).toString(16).padStart(2,'0').toUpperCase();
+  return '#' + h(rgb[0]) + h(rgb[1]) + h(rgb[2]) + 'FF';
+}
+function _xmlEsc(s){ return String(s).replace(/[<>&"']/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&apos;'}[m])); }
+
+function build3MFContentTypes(){
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">\n' +
+    '  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>\n' +
+    '  <Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>\n' +
+    '  <Default Extension="png" ContentType="image/png"/>\n' +
+    '</Types>\n';
+}
+function build3MFRels(){
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\n' +
+    '  <Relationship Target="/3D/3dmodel.model" Id="rel1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>\n' +
+    '</Relationships>\n';
+}
+
+// Bambu Studio model_settings.config — declares the object name and its primary extruder.
+// Multi-color is handled via paint_color attributes on triangles inside the .model file itself.
+function buildBambuModelSettings(objectId, name, primaryExtruder, faceCount){
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<config>\n' +
+    '  <object id="' + objectId + '">\n' +
+    '    <metadata key="name" value="' + _xmlEsc(name) + '"/>\n' +
+    '    <metadata key="extruder" value="' + primaryExtruder + '"/>\n' +
+    '    <metadata face_count="' + faceCount + '"/>\n' +
+    '    <part id="' + (objectId - 1) + '" subtype="normal_part">\n' +
+    '      <metadata key="name" value="' + _xmlEsc(name) + '"/>\n' +
+    '      <metadata key="matrix" value="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>\n' +
+    '      <mesh_stat face_count="' + faceCount + '" edges_fixed="0" degenerate_facets="0" facets_removed="0" facets_reversed="0" backwards_edges="0"/>\n' +
+    '    </part>\n' +
+    '  </object>\n' +
+    '</config>\n';
+}
+
+// Minimal project_settings.config — just sets the filament colors so Bambu Studio's AMS
+// preview shows the customer's chosen colors. Bambu will merge missing keys with its current
+// printer/process profile so this is safe.
+function buildBambuProjectSettings(palette){
+  const colours = palette.map(p => _rgb01ToHex(p.rgb).slice(0, 7));      // "#RRGGBB" — strip alpha
+  const ids = palette.map(_ => "Bambu PLA Basic @BBL X1C");
+  const types = palette.map(_ => "PLA");
+  return JSON.stringify({
+    filament_colour: colours,
+    filament_settings_id: ids,
+    filament_type: types,
+    version: "01.10.01.50"
+  }, null, 2);
+}
+
+function build3MFModel(geometry, palette){
+  // palette: [{name, rgb:[r,g,b]}, ...] — UNIQUE colors actually used in this vase
+  const pos = geometry.getAttribute('position');
+  const col = geometry.getAttribute('color');
+  const vertCount = pos.count;
+  if (vertCount % 3 !== 0) throw new Error('Expected non-indexed geometry (3 verts per face)');
+  const triCount = vertCount / 3;
+
+  // Bounding box for centering: bring (cx, cz, minY-floor) to origin so bed-Z=0 = vase bottom.
+  let minX=Infinity, maxX=-Infinity, minZsrc=Infinity, maxZsrc=-Infinity, minY=Infinity;
+  for (let i = 0; i < vertCount; i++) {
+    const x=pos.getX(i), y=pos.getY(i), z=pos.getZ(i);
+    if (x<minX) minX=x; if (x>maxX) maxX=x;
+    if (z<minZsrc) minZsrc=z; if (z>maxZsrc) maxZsrc=z;
+    if (y<minY) minY=y;
+  }
+  const cx = (minX+maxX)/2, cz = (minZsrc+maxZsrc)/2;
+
+  // Vertices: apply Y-up→Z-up rotation, center on XY, sit on Z=0.
+  const vertLines = new Array(vertCount);
+  for (let i = 0; i < vertCount; i++) {
+    const nx = (pos.getX(i) - cx).toFixed(3);
+    const ny = (-(pos.getZ(i) - cz)).toFixed(3);
+    const nz = (pos.getY(i) - minY).toFixed(3);
+    vertLines[i] = '          <vertex x="'+nx+'" y="'+ny+'" z="'+nz+'"/>';
+  }
+
+  // Map each face color → palette index (0-based). Per-face means all 3 verts of a face share color.
+  // Bambu paint_color is 1-based hex (single char) — "1" = filament slot 1, "2" = slot 2, etc.
+  const tol = 0.012;
+  const triLines = new Array(triCount);
+  let unmatched = 0;
+  for (let f = 0; f < triCount; f++) {
+    const v0 = f * 3;
+    const r = col.getX(v0), g = col.getY(v0), b = col.getZ(v0);
+    let matchIdx = 0;
+    let found = false;
+    for (let i = 0; i < palette.length; i++) {
+      const c = palette[i].rgb;
+      if (Math.abs(c[0]-r)<tol && Math.abs(c[1]-g)<tol && Math.abs(c[2]-b)<tol) { matchIdx = i; found = true; break; }
+    }
+    if (!found) unmatched++;
+    // v37 SHIP MODE: paint_color caused Bambu Studio crashes regardless of encoding/namespace.
+    // Until we get the proprietary RLE encoding right, ship geometry-only — vase opens cleanly
+    // in Bambu Studio, user paints colors manually with the bucket tool (~3 min per vase) using
+    // the order spec from Netlify as a reference. The form submission still carries spec details.
+    void(matchIdx);
+    triLines[f] = '     <triangle v1="'+v0+'" v2="'+(v0+1)+'" v3="'+(v0+2)+'"/>';
+  }
+  if (unmatched > 0) console.warn('[3MF] '+unmatched+' face(s) had unmatched colors → mapped to palette[0]');
+
+  // Bambu Studio 3MF format — uses production extension + their own BambuStudio namespace.
+  // paint_color attribute on triangles drives AMS color assignment.
+  // Minimal Bambu-flavored 3MF: core 3MF namespace + BambuStudio namespace for paint_color.
+  // No production extension (we put mesh inline, not via /3D/Objects/*.model components).
+  // Build item has no transform → Bambu auto-centers the object on the plate.
+  // Pure core 3MF, no BambuStudio namespace at all. If this loads cleanly we'll know all
+  // the Bambu-specific bits were the crash source and can add them back one at a time.
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<model unit="millimeter" xml:lang="en-US"\n' +
+    '       xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">\n' +
+    ' <metadata name="Application">DragonfruitVaseCustomizer</metadata>\n' +
+    ' <resources>\n' +
+    '  <object id="1" type="model">\n' +
+    '   <mesh>\n' +
+    '    <vertices>\n' +
+    vertLines.join('\n') + '\n' +
+    '    </vertices>\n' +
+    '    <triangles>\n' +
+    triLines.join('\n') + '\n' +
+    '    </triangles>\n' +
+    '   </mesh>\n' +
+    '  </object>\n' +
+    ' </resources>\n' +
+    ' <build>\n' +
+    '  <item objectid="1"/>\n' +
+    ' </build>\n' +
+    '</model>\n';
+}
+
+// Build a "for-print" geometry from scratch using the current state, with slicer-friendly tweaks
+// (no cosmetic top lip, closed bottom center). Applies the same color pattern logic so per-face
+// colors match what's on screen. Returns a non-indexed BufferGeometry with `color` attribute.
+function buildPrintGeometry(){
+  const p = scaledP();
+  let geo;
+  switch(state.style){
+    case 'pottery': geo = buildPottery(p, /*forPrint*/true); break;
+    case 'twisted': geo = buildTwistedPoly(p); break;       // already clean (no lip, closed bottom disc)
+    case 'wave':    geo = buildWave(p); break;
+    case 'ribbed':  geo = buildRibbed(p); break;
+  }
+  geo = applyColorPattern(geo);   // non-indexes + colors per face
+  return geo;
+}
+
+async function build3MFBlob(){
+  if (typeof JSZip === 'undefined') throw new Error('JSZip not loaded yet — refresh the page.');
+  if (!vaseMesh) throw new Error('No vase to export — try changing a setting first.');
+
+  // Use a fresh print-tuned geometry — NOT the on-screen geometry, which has cosmetic flair
+  // (top lip on pottery, etc.) that slicers reject as unprintable overhangs.
+  const outerGeo = buildPrintGeometry();
+
+  // Build the unique palette actually used (dedupe in case secondaries duplicate primary).
+  const seen = new Set();
+  const palette = [];
+  const addColor = (rgb, name) => {
+    const key = rgb.map(v => v.toFixed(3)).join(',');
+    if (!seen.has(key)) { seen.add(key); palette.push({ name, rgb: [rgb[0], rgb[1], rgb[2]] }); }
+  };
+  addColor(COLORS[state.colorIdx].rgb, COLORS[state.colorIdx].name);
+  if (state.finish === 'multi') {
+    state.secondaryColors.slice(0, state.numColors - 1).forEach(idx => {
+      addColor(COLORS[idx].rgb, COLORS[idx].name);
+    });
+  }
+
+  // v33: Bambu Studio's "not from Bambu Lab → geometry+color only" dialog confirms it'll honor
+  // paint_color on triangles. Partial Metadata/*.config files were crashing Bambu post-OK
+  // (missing fields it expected to merge). Skip them — Bambu will use its current profile
+  // and read just our paint_color attributes for AMS region assignment.
+  const modelXML = build3MFModel(outerGeo, palette);
+
+  const zip = new JSZip();
+  zip.file('[Content_Types].xml', build3MFContentTypes());
+  zip.folder('_rels').file('.rels', build3MFRels());
+  zip.folder('3D').file('3dmodel.model', modelXML);
+  return await zip.generateAsync({ type: 'blob', mimeType: 'model/3mf', compression: 'DEFLATE' });
+}
+
+// Staff-only download button: revealed when URL has ?staff=1 (or ?staff)
+(function revealStaffControls(){
+  const q = new URLSearchParams(location.search);
+  if (q.has('staff')) {
+    const btn = document.getElementById('downloadBtn');
+    if (btn) btn.style.display = '';
+  }
+})();
+document.getElementById('downloadBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('downloadBtn');
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = '⏳ BUILDING 3MF…';
+  try {
+    const blob = await build3MFBlob();
+    const styleLabel = state.style;
+    const colorLabel = COLORS[state.colorIdx].name.toLowerCase().replace(/\s+/g,'-');
+    const filename = `dragonfruit-vase-${styleLabel}-${colorLabel}.3mf`;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 1500);
+    btn.textContent = '✅ DOWNLOADED — CHECK YOUR DOWNLOADS';
+    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2500);
+  } catch (err) {
+    console.error('[3MF] export failed:', err);
+    btn.textContent = '❌ FAILED — SEE CONSOLE';
+    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
+  }
+});
+
+buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera(); animate();
+</script>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v37</div>
+</body>
+</html>

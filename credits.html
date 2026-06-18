@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credits & Attributions — Dragonfruit 3D</title>
+    <link rel="icon" type="image/x-icon" href="/favicon-logo.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32-logo.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512-logo.png">
+    <link rel="apple-touch-icon" href="/favicon-512-logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff0096;
+            --secondary: #ff5ec7;
+            --accent: #00d4ff;
+            --dark: #0a0015;
+            --darker: #050008;
+            --card: #1a0a2e;
+            --text: #e0e6ed;
+            --text-dim: #8892a6;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--darker);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        nav {
+            background: rgba(10, 0, 21, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 20px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 0, 150, 0.2);
+        }
+        nav .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        .logo span {
+            background: linear-gradient(135deg, #ff0096 0%, #ff5ec7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+        nav a.back {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+        nav a.back:hover { color: var(--primary); }
+
+        main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 40px 80px;
+        }
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        .subtitle {
+            color: var(--accent);
+            font-size: 0.85rem;
+            letter-spacing: 3px;
+            margin-bottom: 40px;
+        }
+        h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            color: var(--primary);
+            margin: 40px 0 16px;
+            letter-spacing: 1px;
+        }
+        p { margin-bottom: 16px; color: var(--text); }
+        a { color: var(--accent); }
+        a:hover { color: var(--primary); }
+
+        .intro {
+            background: rgba(255, 0, 150, 0.05);
+            border-left: 3px solid var(--primary);
+            padding: 24px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+        .credit-card {
+            background: var(--card);
+            border: 1px solid rgba(255, 0, 150, 0.2);
+            border-radius: 6px;
+            padding: 20px 24px;
+            margin-bottom: 14px;
+        }
+        .credit-card.attributed {
+            border-color: var(--primary);
+        }
+        .credit-card .name {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: var(--text);
+            font-size: 1.05rem;
+            margin-bottom: 4px;
+        }
+        .credit-card .source {
+            color: var(--accent);
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+        .credit-card .note {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            font-style: italic;
+        }
+        .badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 3px;
+            letter-spacing: 1px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .badge.attr { background: var(--primary); color: white; }
+        .badge.tbc { background: rgba(0, 212, 255, 0.15); color: var(--accent); border: 1px solid var(--accent); }
+
+        .contact-box {
+            background: linear-gradient(135deg, rgba(255, 0, 150, 0.1), rgba(0, 212, 255, 0.05));
+            border: 1px solid rgba(255, 0, 150, 0.3);
+            padding: 24px 28px;
+            border-radius: 6px;
+            margin: 40px 0;
+            text-align: center;
+        }
+        .contact-box h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        .contact-box a {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 1px solid rgba(255, 0, 150, 0.15);
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+        footer a { margin: 0 10px; }
+        @media (max-width: 600px) {
+            main { padding: 40px 20px 60px; }
+            h1 { font-size: 1.8rem; }
+            nav { padding: 16px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-inner">
+            <a href="/" class="logo">
+                <svg width="36" height="36" viewBox="0 0 512 512" style="vertical-align: middle; margin-right: 10px;">
+                    <polygon points="256.00,26.00 455.19,141.00 455.19,371.00 256.00,486.00 56.81,371.00 56.81,141.00" fill="#ff0096"/>
+                    <polygon points="256.00,126.00 368.56,191.00 368.56,321.00 256.00,386.00 143.44,321.00 143.44,191.00" fill="#00d4ff"/>
+                </svg>
+                <span>DRAGONFRUIT 3D</span>
+            </a>
+            <a href="/" class="back">← BACK TO HOME</a>
+        </div>
+    </nav>
+
+    <main>
+        <h1>Credits & Attributions</h1>
+        <div class="subtitle">// MODELS · DESIGNERS · COMMUNITY</div>
+
+        <div class="intro">
+            <p>Dragonfruit 3D is a small-batch 3D printing studio. We print on demand using a mix of community-designed models from the maker community and our own work. This page exists to credit the designers whose work we sell, in line with the licensing terms of platforms like MakerWorld, Printables, and Thingiverse.</p>
+            <p style="margin-bottom: 0;">We're committed to giving credit where it's due. If you're a designer and recognize your work here — whether it's already credited or not — please reach out so we can attribute it correctly (or remove it on request).</p>
+        </div>
+
+        <h2>Models from MakerLab</h2>
+        <p>Some of the products we sell are designs from <a href="https://makerworld.com/en/makerlab" target="_blank" rel="noopener">MakerLab on MakerWorld</a> — Bambu Lab's official model collection. We use their designs under the licensing terms of MakerWorld.</p>
+
+        <div class="credit-card attributed">
+            <div class="name">Multi Pocket Desk Organizer <span class="badge attr">CREDITED</span></div>
+            <div class="source">Source: MakerLab on MakerWorld → <a href="https://makerworld.com/en/makerlab" target="_blank" rel="noopener">makerworld.com/en/makerlab</a></div>
+        </div>
+
+        <h2>Models from MakerWorld community designers</h2>
+        <p>Designs from independent creators on MakerWorld, used under their published licensing terms.</p>
+
+        <div class="credit-card attributed">
+            <div class="name">Cat Phone Stand <span class="badge attr">CREDITED</span></div>
+            <div class="source">Designed by Jaroslaw on <a href="https://makerworld.com/" target="_blank" rel="noopener">MakerWorld</a></div>
+        </div>
+
+        <h2>Models — Attribution To Be Confirmed</h2>
+        <p>The following products in our catalog were sourced from the broader MakerWorld / Printables / Thingiverse community. We're working on tracing the original designer for each one and will update this page as we confirm sources.</p>
+
+        <div class="credit-card">
+            <div class="name">Spiral Vase <span class="badge tbc">TBC</span></div>
+            <div class="note">Likely from MakerWorld community — original designer being confirmed.</div>
+        </div>
+        <div class="credit-card">
+            <div class="name">Hexagon Planter <span class="badge tbc">TBC</span></div>
+            <div class="note">Likely from MakerWorld community — original designer being confirmed.</div>
+        </div>
+        <div class="credit-card">
+            <div class="name">Spiral Stacked Planter <span class="badge tbc">TBC</span></div>
+            <div class="note">Likely from MakerWorld community — original designer being confirmed.</div>
+        </div>
+        <div class="credit-card">
+            <div class="name">Articulated Dragon <span class="badge tbc">TBC</span></div>
+            <div class="note">Popular community design — original designer being confirmed.</div>
+        </div>
+        <div class="credit-card">
+            <div class="name">Hexagon Fidget <span class="badge tbc">TBC</span></div>
+            <div class="note">Community fidget design — original designer being confirmed.</div>
+        </div>
+        <div class="credit-card">
+            <div class="name">Infinity Cube <span class="badge tbc">TBC</span></div>
+            <div class="note">Classic community design — original designer being confirmed.</div>
+        </div>
+        <div class="credit-card">
+            <div class="name">Geometric Wall Art (Dog, Deer, Wolf, Bear, Fox) <span class="badge tbc">TBC</span></div>
+            <div class="note">Community wall-art designs — original designers being confirmed.</div>
+        </div>
+        <div class="credit-card">
+            <div class="name">3D Benchy <span class="badge attr">CREDITED</span></div>
+            <div class="source">The jolly 3D printing torture-test by <a href="https://www.3dbenchy.com/" target="_blank" rel="noopener">CreativeTools.se</a> — released free under CC BY-ND 4.0.</div>
+        </div>
+
+        <h2>Custom Work</h2>
+        <p>Custom orders we've made for individual customers (e.g., the Dodgers wall art, custom bookends, memorial pieces) are designed or remixed specifically for those orders. They are not part of our regular catalog.</p>
+
+        <h2>Fonts & Code</h2>
+        <p>This site uses <strong>Orbitron</strong> and <strong>Space Mono</strong> from Google Fonts (SIL Open Font License). Site code is custom.</p>
+
+        <div class="contact-box">
+            <h3>// ARE WE MISSING YOUR CREDIT?</h3>
+            <p>If you're a designer whose work appears in our catalog and you'd like proper attribution — or you'd prefer we stop selling your design — please contact us:</p>
+            <p style="margin-bottom: 0;"><a href="mailto:dragonfruit3d@protonmail.com">dragonfruit3d@protonmail.com</a></p>
+        </div>
+
+        <p style="color: var(--text-dim); font-size: 0.85rem; text-align: center; margin-top: 40px;">
+            Last updated: April 2026 · We update this page as we confirm more designers.
+        </p>
+    </main>
+
+    <footer>
+        © 2026 Dragonfruit 3D ·
+        <a href="/">Home</a> ·
+        <a href="mailto:dragonfruit3d@protonmail.com">Contact</a>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,19 @@
+[build]
+  functions = "netlify/functions"
+  publish = "."
+
+[functions]
+  node_bundler = "esbuild"
+
+# Cache STL files for 1 year — they rarely change and are big.
+# After first load, subsequent 3D viewer opens are instant (served from browser cache).
+[[headers]]
+  for = "/*.stl"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Same for product images
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"  # 30 days

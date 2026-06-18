@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dragonfruit 3D - Logo Showcase</title>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@800;900&family=Rajdhani:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0015 0%, #1a0a2e 50%, #0a0015 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .showcase {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .logo-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 3rem;
+        }
+
+        .glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255, 0, 150, 0.3) 0%, transparent 70%);
+            filter: blur(60px);
+            animation: pulse 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .logo-svg {
+            position: relative;
+            z-index: 1;
+            filter: drop-shadow(0 10px 30px rgba(255, 0, 150, 0.4));
+        }
+
+        h1 {
+            font-family: 'Exo 2', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff0096 0%, #ff5ec7 50%, #ff0096 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            animation: textGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes textGlow {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(255, 0, 150, 0.6)); }
+            50% { filter: drop-shadow(0 0 40px rgba(255, 0, 150, 0.9)); }
+        }
+
+        .tagline {
+            font-size: 1.5rem;
+            color: #ff5ec7;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+        }
+
+        .variations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .variation {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 0, 150, 0.2);
+            padding: 2rem;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .variation:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 0, 150, 0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(255, 0, 150, 0.3);
+        }
+
+        .variation h3 {
+            color: #ff5ec7;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+
+        .variation-logo {
+            margin: 1.5rem 0;
+        }
+
+        .color-dark {
+            background: #0a0015;
+        }
+
+        .color-light {
+            background: #ffffff;
+        }
+
+        .color-magenta {
+            background: #ff0096;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .tagline { font-size: 1rem; letter-spacing: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="showcase">
+        <div class="logo-container">
+            <div class="glow"></div>
+            
+            <!-- Main Logo -->
+            <svg class="logo-svg" width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                <!-- Background circle with gradient -->
+                <defs>
+                    <linearGradient id="dragonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ff0096;stop-opacity:1" />
+                        <stop offset="50%" style="stop-color:#ff5ec7;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#ff0096;stop-opacity:1" />
+                    </linearGradient>
+                    
+                    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#00ffff;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#0088ff;stop-opacity:1" />
+                    </linearGradient>
+
+                    <filter id="glow">
+                        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                        <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+
+                <!-- Dragon fruit shape - stylized hexagonal 3D form -->
+                <g transform="translate(200, 200)">
+                    <!-- Outer spikes (dragonfruit scales) -->
+                    <g opacity="0.7">
+                        <path d="M 0,-100 L 15,-85 L 0,-90 Z" fill="#00ffff">
+                            <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="20s" repeatCount="indefinite"/>
+                        </path>
+                        <path d="M 70,-70 L 80,-55 L 65,-60 Z" fill="#00ffff">
+                            <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="20s" repeatCount="indefinite"/>
+                        </path>
+                        <path d="M 100,0 L 105,15 L 90,10 Z" fill="#00ffff">
+                            <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="20s" repeatCount="indefinite"/>
+                        </path>
+                        <path d="M 70,70 L 80,85 L 65,75 Z" fill="#00ffff">
+                            <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="20s" repeatCount="indefinite"/>
+                        </path>
+                        <path d="M 0,100 L 15,115 L 0,105 Z" fill="#00ffff">
+                            <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="20s" repeatCount="indefinite"/>
+                        </path>
+                        <path d="M -70,70 L -55,85 L -65,75 Z" fill="#00ffff">
+                            <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="20s" repeatCount="indefinite"/>
+                        </path>
+                        <path d="M -100,0 L -85,15 L -95,5 Z" fill="#00ffff">
+                            <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="20s" repeatCount="indefinite"/>
+                        </path>
+                        <path d="M -70,-70 L -55,-55 L -65,-65 Z" fill="#00ffff">
+                            <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="20s" repeatCount="indefinite"/>
+                        </path>
+                    </g>
+
+                    <!-- Main hexagonal body (3D effect) -->
+                    <g filter="url(#glow)">
+                        <!-- Back faces (darker) -->
+                        <path d="M 0,-80 L 70,-40 L 70,40 L 0,80 Z" fill="#cc0078" opacity="0.8"/>
+                        <path d="M 0,80 L -70,40 L -70,-40 L 0,-80 Z" fill="#990058" opacity="0.8"/>
+                        
+                        <!-- Front face (brightest) -->
+                        <path d="M 0,-80 L 70,-40 L 0,0 L -70,-40 Z" fill="url(#dragonGrad)">
+                            <animate attributeName="opacity" values="1;0.9;1" dur="2s" repeatCount="indefinite"/>
+                        </path>
+                        <path d="M 70,-40 L 70,40 L 0,0 Z" fill="#ff3db3"/>
+                        <path d="M -70,-40 L 0,0 L -70,40 Z" fill="#e6008f"/>
+                        <path d="M -70,40 L 0,80 L 0,0 Z" fill="#cc0078"/>
+                        <path d="M 0,80 L 70,40 L 0,0 Z" fill="#ff5ec7"/>
+                    </g>
+
+                    <!-- Center highlight -->
+                    <circle cx="0" cy="0" r="20" fill="url(#accentGrad)" opacity="0.8">
+                        <animate attributeName="r" values="20;25;20" dur="2s" repeatCount="indefinite"/>
+                        <animate attributeName="opacity" values="0.8;1;0.8" dur="2s" repeatCount="indefinite"/>
+                    </circle>
+
+                    <!-- "3D" text integrated into design -->
+                    <text x="0" y="10" font-family="Exo 2, sans-serif" font-size="40" font-weight="900" fill="#ffffff" text-anchor="middle" filter="url(#glow)">3D</text>
+
+                    <!-- Inner geometric pattern -->
+                    <g opacity="0.3" stroke="#00ffff" stroke-width="2" fill="none">
+                        <polygon points="0,-30 25,-15 25,15 0,30 -25,15 -25,-15"/>
+                        <polygon points="0,-20 17,-10 17,10 0,20 -17,10 -17,-10"/>
+                    </g>
+                </g>
+
+                <!-- Orbiting particles -->
+                <circle cx="200" cy="50" r="3" fill="#00ffff" opacity="0.6">
+                    <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="8s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="350" cy="200" r="2" fill="#ff5ec7" opacity="0.6">
+                    <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="12s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="200" cy="350" r="4" fill="#00ffff" opacity="0.6">
+                    <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="10s" repeatCount="indefinite"/>
+                </circle>
+            </svg>
+        </div>
+
+        <h1>Dragonfruit 3D</h1>
+        <p class="tagline">Exotic Prints</p>
+
+        <div class="variations">
+            <!-- Dark Background Version -->
+            <div class="variation">
+                <h3>Dark Background</h3>
+                <div class="variation-logo color-dark">
+                    <svg width="200" height="200" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#ff0096;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#ff5ec7;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <g transform="translate(200, 200)">
+                            <path d="M 0,-80 L 70,-40 L 70,40 L 0,80 Z" fill="#cc0078" opacity="0.8"/>
+                            <path d="M 0,80 L -70,40 L -70,-40 L 0,-80 Z" fill="#990058" opacity="0.8"/>
+                            <path d="M 0,-80 L 70,-40 L 0,0 L -70,-40 Z" fill="url(#grad1)"/>
+                            <path d="M 70,-40 L 70,40 L 0,0 Z" fill="#ff3db3"/>
+                            <path d="M -70,-40 L 0,0 L -70,40 Z" fill="#e6008f"/>
+                            <circle cx="0" cy="0" r="20" fill="#00ffff" opacity="0.8"/>
+                            <text x="0" y="10" font-family="Exo 2" font-size="40" font-weight="900" fill="#ffffff" text-anchor="middle">3D</text>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Light Background Version -->
+            <div class="variation">
+                <h3>Light Background</h3>
+                <div class="variation-logo color-light">
+                    <svg width="200" height="200" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#ff0096;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#ff5ec7;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <g transform="translate(200, 200)">
+                            <path d="M 0,-80 L 70,-40 L 70,40 L 0,80 Z" fill="#cc0078" opacity="0.9"/>
+                            <path d="M 0,80 L -70,40 L -70,-40 L 0,-80 Z" fill="#990058" opacity="0.9"/>
+                            <path d="M 0,-80 L 70,-40 L 0,0 L -70,-40 Z" fill="url(#grad2)"/>
+                            <path d="M 70,-40 L 70,40 L 0,0 Z" fill="#ff3db3"/>
+                            <path d="M -70,-40 L 0,0 L -70,40 Z" fill="#e6008f"/>
+                            <circle cx="0" cy="0" r="20" fill="#00d4ff" opacity="0.9"/>
+                            <text x="0" y="10" font-family="Exo 2" font-size="40" font-weight="900" fill="#1a0a2e" text-anchor="middle">3D</text>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Monochrome Version -->
+            <div class="variation">
+                <h3>Monochrome</h3>
+                <div class="variation-logo color-dark">
+                    <svg width="200" height="200" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                        <g transform="translate(200, 200)">
+                            <path d="M 0,-80 L 70,-40 L 70,40 L 0,80 Z" fill="#666666"/>
+                            <path d="M 0,80 L -70,40 L -70,-40 L 0,-80 Z" fill="#333333"/>
+                            <path d="M 0,-80 L 70,-40 L 0,0 L -70,-40 Z" fill="#ffffff"/>
+                            <path d="M 70,-40 L 70,40 L 0,0 Z" fill="#cccccc"/>
+                            <path d="M -70,-40 L 0,0 L -70,40 Z" fill="#999999"/>
+                            <circle cx="0" cy="0" r="20" fill="#ffffff"/>
+                            <text x="0" y="10" font-family="Exo 2" font-size="40" font-weight="900" fill="#000000" text-anchor="middle">3D</text>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Icon Only (Favicon) -->
+            <div class="variation">
+                <h3>Icon / Favicon</h3>
+                <div class="variation-logo color-magenta">
+                    <svg width="200" height="200" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                        <g transform="translate(200, 200)">
+                            <path d="M 0,-80 L 70,-40 L 70,40 L 0,80 Z" fill="#aa0066"/>
+                            <path d="M 0,80 L -70,40 L -70,-40 L 0,-80 Z" fill="#770044"/>
+                            <path d="M 0,-80 L 70,-40 L 0,0 L -70,-40 Z" fill="#ffffff"/>
+                            <path d="M 70,-40 L 70,40 L 0,0 Z" fill="#eeeeee"/>
+                            <path d="M -70,-40 L 0,0 L -70,40 Z" fill="#cccccc"/>
+                            <circle cx="0" cy="0" r="20" fill="#00ffff"/>
+                            <text x="0" y="10" font-family="Exo 2" font-size="40" font-weight="900" fill="#ffffff" text-anchor="middle">3D</text>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
