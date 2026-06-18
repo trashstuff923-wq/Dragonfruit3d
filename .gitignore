@@ -1,0 +1,13 @@
+# macOS junk
+.DS_Store
+**/.DS_Store
+
+# Local Claude Code preview config (not part of the site)
+.claude/
+
+# Node / Netlify Functions deps (Netlify installs these on deploy)
+node_modules/
+
+# Local env files — NEVER commit secrets
+.env
+.env.*
