@@ -1295,13 +1295,18 @@
             top: 0;
             width: 400px;
             height: 100vh;
+            height: 100dvh;          /* dynamic viewport height — accounts for mobile browser toolbars */
             background: var(--dark);
             border-left: 1px solid var(--primary);
             padding: 2rem;
             z-index: 2000;
             transition: right 0.4s ease-out;
-            overflow-y: auto;
+            /* Flex column so the checkout footer is ALWAYS pinned + tappable, items scroll between */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
+        .cart-header { flex-shrink: 0; }
 
         .cart-sidebar.open {
             right: 0;
@@ -1337,8 +1342,11 @@
         }
 
         .cart-items {
-            margin-bottom: 2rem;
+            flex: 1 1 auto;          /* take remaining space, scroll inside */
+            overflow-y: auto;
+            margin-bottom: 1rem;
         }
+        .cart-total { flex-shrink: 0; } /* checkout footer never scrolls off / gets cut */
 
         .cart-item {
             display: flex;
@@ -3627,7 +3635,12 @@
 
         // Toggle Cart
         function toggleCart() {
-            document.getElementById('cartSidebar').classList.toggle('open');
+            const sidebar = document.getElementById('cartSidebar');
+            sidebar.classList.toggle('open');
+            // Hide the "Best on Desktop" mobile banner while the cart is open so it can never
+            // cover the CHECKOUT button (it sits fixed at the bottom of the screen).
+            const popup = document.getElementById('mobilePopup');
+            if (popup && sidebar.classList.contains('open')) popup.style.display = 'none';
         }
 
         // Checkout with Stripe via Netlify Function
@@ -4327,7 +4340,7 @@
     </script>
 
 <!-- Mobile small screen popup -->
-<div id="mobilePopup" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:99999; background:linear-gradient(135deg,#0d1117,#1a0a2e); border-top:2px solid #FF006E; padding:1rem 1.25rem; box-shadow:0 -4px 20px rgba(255,0,110,0.3);">
+<div id="mobilePopup" style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:1500; background:linear-gradient(135deg,#0d1117,#1a0a2e); border-top:2px solid #FF006E; padding:1rem 1.25rem; box-shadow:0 -4px 20px rgba(255,0,110,0.3);">
     <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
         <div>
             <div style="color:#FF006E; font-weight:700; font-size:0.9rem; font-family:'Courier New',monospace;">💻 Best on Desktop</div>
