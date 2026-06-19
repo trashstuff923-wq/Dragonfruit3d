@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dragonfruit 3D Pottery Wheel · v4 (Jun 19) · studied Google's actual game: real clay material (terracotta + throwing-ring bump + soft shading), look-down 3/4 view into the pot, spinning wheel, direct grab-pull. -->
+<!-- Dragonfruit 3D Pottery Wheel · v5 (Jun 19) · PRESSURE model from the recording: press & hold, clay yields away from the cursor (in on the body / out past the edge). Not position-dragging. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -101,7 +101,7 @@
 
 <div class="header">
   <h1>THROW ON THE WHEEL</h1>
-  <p>// grab the spinning clay and pull — drag the wall OUT to widen, IN to narrow, up/down to shape the whole pot. then we print it for real.</p>
+  <p>// press &amp; HOLD on the clay to push it IN — press just OUTSIDE the edge to pull it OUT. hold longer = more. then we print it for real.</p>
   <a href="/customize-vase.html" class="cross-link">// prefer sliders? use the classic vase designer →</a>
 </div>
 
@@ -111,7 +111,7 @@
     <div class="dim-display" id="dimDisplay"><span class="v">18.0</span>cm tall · <span class="v">8.0</span>cm wide</div>
     <div class="print-chip" id="printChip">// PRINTABLE ✓</div>
     <div class="contact-dot" id="contactDot"></div>
-    <div class="preview-overlay" id="overlay">// grab the clay &amp; pull it in/out · drag up/down to shape · two fingers to look around</div>
+    <div class="preview-overlay" id="overlay">// press &amp; hold to push IN · press just outside the edge to pull OUT · two fingers to look around</div>
   </div>
 
   <div class="controls">
@@ -428,22 +428,24 @@ function pickFromPointer(clientX, clientY){
 }
 
 /* ---- brush: Gaussian ease toward cursor radius, then global clamp ---- */
-let BRUSH = 10;                 // half-width in samples (slider 6..24)
-const TRACK = 0.6;              // how directly the wall follows the cursor (1 = instant). High = clay sticks to finger.
-function applyBrush(idx, cursorR){
+let BRUSH = 9;                  // half-width in samples (slider 6..24)
+const PRESS_RATE = 0.5;         // mm of clay that yields PER FRAME while you hold (× brush weight)
+// PRESSURE model (not position): while you hold, the clay slowly yields in the pressed direction —
+// dir = -1 pushes the wall IN (denting the body), dir = +1 pulls it OUT. The cursor only selects the
+// height + (at touch-down) which direction. Holding longer = more give, exactly like pressing real clay.
+function applyPress(idx, dir){
   let maxDelta = 0;
   for (let i=1;i<N;i++){
     const d = i - idx;
     const w = Math.exp(-(d*d)/(2*BRUSH*BRUSH));
     if (w < 0.01) continue;
     const before = profileR[i];
-    // DIRECT grab-and-pull: the edge tracks the cursor (no mushy easing). Brush weight spreads it.
-    profileR[i] = before + (cursorR - before) * (TRACK * w);
+    profileR[i] = before + dir * PRESS_RATE * w;
     const dd = Math.abs(profileR[i]-before); if (dd>maxDelta) maxDelta=dd;
   }
   laplacian(1, 0.12);           // light anti-jaggy pass
   clampProfile();               // global printability + closed-bottom guarantee
-  return maxDelta;              // how much the wall moved this frame (for change-detection)
+  return maxDelta;
 }
 function laplacian(passes, lambda){
   for (let p=0;p<passes;p++){
@@ -458,6 +460,7 @@ function laplacian(passes, lambda){
 
 /* ---- spin ---- */
 let spinOn = true, sculpting = false;
+let pressDir = -1;              // latched at touch-down: -1 = push body IN, +1 = pull edge OUT
 const SPIN_SPEED = 0.05;        // potter's-wheel pace — keeps spinning while you shape (visible via the wheel head)
 
 /* ---- camera orbit (reused math; gated so sculpt-drag never orbits) ---- */
@@ -495,10 +498,12 @@ canvas.addEventListener('pointerdown', e=>{
     if (pointers.size>=2){ pinchPrev = pinchDist(); }
     e.preventDefault(); return;
   }
-  // sculpt
+  // sculpt — latch the press direction NOW: cursor inside the wall ⇒ push IN, outside ⇒ pull OUT
   canvas.setPointerCapture(e.pointerId);
   pushUndo();
   sculpting = true;
+  const pk0 = pickFromPointer(e.clientX, e.clientY);
+  pressDir = (pk0.cursorR < profileR[pk0.idx]) ? -1 : +1;
   if (navigator.vibrate) navigator.vibrate(8);
   pending = {x:e.clientX, y:e.clientY}; dirty = true;
   showContact(e.clientX, e.clientY);
@@ -550,9 +555,9 @@ function animate(){
   requestAnimationFrame(animate);
   if (vaseGroup && spinOn) vaseGroup.rotation.y += SPIN_SPEED;
   if (sculpting && pending){
-    const { idx, cursorR } = pickFromPointer(pending.x, pending.y);
-    const delta = applyBrush(idx, cursorR);
-    if (delta > 0.03) updateMesh();      // skip rebuild once the ring has formed (perf)
+    const { idx } = pickFromPointer(pending.x, pending.y);   // cursor selects WHICH height to press
+    const delta = applyPress(idx, pressDir);                 // clay yields in the latched direction while held
+    if (delta > 0.02) updateMesh();
     else { updatePrice(); checkPrintability(); }
   }
   renderer.render(scene, camera);
@@ -705,6 +710,6 @@ document.getElementById('downloadBtn').addEventListener('click', async ()=>{
 initClay(); initMeshes(); resizeRenderer(); updateMesh(); buildColorGrid(); updateCamera(); animate();
 document.getElementById('brushVal').textContent=(BRUSH*(H/(N-1))/10).toFixed(1)+'cm';
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">sculpt v4</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">sculpt v5</div>
 </body>
 </html>
