@@ -6,6 +6,13 @@
   functions = "netlify/functions"
   publish = "."
 
+[build.environment]
+  # Netlify's secret scanner fails the build if an env-var VALUE appears in the published files.
+  # ADMIN_KEY is the data-dashboard password (used only server-side in get-orders.js). If its value
+  # happens to match a word on the site, the scanner false-positives. It's never written into any
+  # deployed file, so it's safe to omit it from scanning.
+  SECRETS_SCAN_OMIT_KEYS = "ADMIN_KEY"
+
 [functions]
   node_bundler = "esbuild"
 
