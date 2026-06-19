@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dragonfruit 3D Pottery Wheel · v3 (Jun 19) · visible spinning wheel head + direct grab-and-pull (clay sticks to finger) + head-on silhouette view. Closer to Google 3D Pottery. -->
+<!-- Dragonfruit 3D Pottery Wheel · v4 (Jun 19) · studied Google's actual game: real clay material (terracotta + throwing-ring bump + soft shading), look-down 3/4 view into the pot, spinning wheel, direct grab-pull. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -222,7 +222,7 @@ const COST = {
   brimGrams: 2, failureRate: 0.05, markup: 1.4, setupFee: 3, minOrder: 12,
 };
 // minimal state for reuse (single-color sculpt)
-const state = { colorIdx: 1, estimatedGrams: 0, estimatedHours: 0 };
+const state = { colorIdx: 8, estimatedGrams: 0, estimatedHours: 0 };  // default Brown — looks like real clay on load
 
 // ---- data model: the vase profile ----
 const N = 120;                          // profile samples, base → top
@@ -265,9 +265,11 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));   // cap at 2 — 
 function resizeRenderer(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
 window.addEventListener('resize',resizeRenderer);
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0xc0c0c0, 1.1));
-const keyLight = new THREE.DirectionalLight(0xffffff, 0.25);
-keyLight.position.set(120, 200, 100); scene.add(keyLight);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x403030, 0.85));
+const keyLight = new THREE.DirectionalLight(0xffffff, 0.7);    // soft clay highlight that reveals the throwing rings
+keyLight.position.set(90, 220, 140); scene.add(keyLight);
+const fillLight = new THREE.DirectionalLight(0xfff0e6, 0.25);
+fillLight.position.set(-120, 60, -40); scene.add(fillLight);
 
 const floor=new THREE.Mesh(new THREE.CircleGeometry(180,64),new THREE.MeshBasicMaterial({color:0x1a0a2e,transparent:true,opacity:.35}));
 floor.rotation.x=-Math.PI/2; floor.position.y=-0.5; scene.add(floor);
@@ -282,24 +284,41 @@ gridHelper.position.y=-0.4; gridHelper.material.opacity=0.35; gridHelper.materia
 // wedges + rings make the rotation obvious.
 function makeWheelHead(){
   const c=document.createElement('canvas'); c.width=c.height=256; const x=c.getContext('2d');
-  x.fillStyle='#241038'; x.beginPath(); x.arc(128,128,128,0,7); x.fill();
+  x.fillStyle='#1a0e26'; x.beginPath(); x.arc(128,128,128,0,7); x.fill();
   x.save(); x.translate(128,128);
-  for(let k=0;k<16;k++){ x.rotate(Math.PI*2/16); x.fillStyle = k%2?'#3a2456':'#1c0e30'; x.beginPath(); x.moveTo(0,0); x.arc(0,0,128,-Math.PI/16,Math.PI/16); x.closePath(); x.fill(); }
+  for(let k=0;k<16;k++){ x.rotate(Math.PI*2/16); x.fillStyle = k%2?'#241634':'#160a22'; x.beginPath(); x.moveTo(0,0); x.arc(0,0,128,-Math.PI/16,Math.PI/16); x.closePath(); x.fill(); }
   x.restore();
-  x.strokeStyle='rgba(0,212,255,.4)'; x.lineWidth=4;
+  x.strokeStyle='rgba(0,212,255,.22)'; x.lineWidth=3;
   x.beginPath(); x.arc(128,128,118,0,7); x.stroke();
   x.beginPath(); x.arc(128,128,72,0,7); x.stroke();
-  x.fillStyle='#ff0096'; x.beginPath(); x.arc(128,128,8,0,7); x.fill();   // hot-pink hub
+  x.fillStyle='rgba(255,0,150,.7)'; x.beginPath(); x.arc(128,128,7,0,7); x.fill();   // subtle hub
   const tex=new THREE.CanvasTexture(c);
-  const disc=new THREE.Mesh(new THREE.CircleGeometry(150,64), new THREE.MeshBasicMaterial({map:tex,transparent:true}));
-  disc.rotation.x=-Math.PI/2; disc.position.y=-0.5;
+  const disc=new THREE.Mesh(new THREE.CircleGeometry(155,64), new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:0.7}));
+  disc.rotation.x=-Math.PI/2; disc.position.y=-0.6;
   return disc;
+}
+
+// Throwing-ring bump texture — the fine horizontal ridges that make thrown clay look like clay.
+// LatheGeometry UV: v runs along the profile (height), so horizontal ridges in the texture become
+// concentric rings around the pot. Bump only (no geometry change) so the silhouette + print stay smooth.
+function makeClayRings(){
+  const c=document.createElement('canvas'); c.width=4; c.height=256; const x=c.getContext('2d');
+  for(let y=0;y<256;y++){
+    const ridge = Math.sin(y*0.85)*0.5+0.5;                 // ~35 fine rings up the height
+    const undul = Math.sin(y*0.11)*8;                        // slow throwing undulation
+    const v = Math.max(0,Math.min(255, 130 + (ridge-0.5)*60 + undul));
+    x.fillStyle='rgb('+(v|0)+','+(v|0)+','+(v|0)+')'; x.fillRect(0,y,4,1);
+  }
+  const t=new THREE.CanvasTexture(c); t.wrapS=THREE.RepeatWrapping; t.wrapT=THREE.RepeatWrapping; t.repeat.set(1,1);
+  return t;
 }
 
 let vaseGroup = null, meshOuter = null, meshInner = null;
 function initMeshes(){
-  meshOuter = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial({ vertexColors:true, side:THREE.FrontSide }));
-  meshInner = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial({ vertexColors:true, side:THREE.BackSide }));
+  const rings = makeClayRings();
+  // Soft matte clay: MeshPhong with a faint sheen + the ring bump. color set per-swatch in updateMesh.
+  meshOuter = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshPhongMaterial({ color:0xffffff, side:THREE.FrontSide, shininess:5, specular:0x141008, bumpMap:rings, bumpScale:0.55 }));
+  meshInner = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshPhongMaterial({ color:0x222222, side:THREE.BackSide, shininess:2, specular:0x000000 }));
   vaseGroup = new THREE.Group();
   vaseGroup.add(makeWheelHead());                 // spins with the clay → visible rotation
   vaseGroup.add(meshOuter); vaseGroup.add(meshInner);
@@ -316,18 +335,14 @@ function profileToPoints(){
 /* ---- update mesh geometry in place: lathe + two-layer hollow ---- */
 function updateMesh(){
   const geo = new THREE.LatheGeometry(profileToPoints(), 96);
-  const rgb = COLORS[state.colorIdx].rgb;
-  const vc = new Float32Array(geo.attributes.position.count*3);
-  for (let i=0;i<vc.length;i+=3){ vc[i]=rgb[0]; vc[i+1]=rgb[1]; vc[i+2]=rgb[2]; }
-  geo.setAttribute('color', new THREE.BufferAttribute(vc,3));
-
   const innerGeo = geo.clone();
-  const dark = new Float32Array(vc.length);
-  for (let i=0;i<vc.length;i++) dark[i] = vc[i]*0.4;
-  innerGeo.setAttribute('color', new THREE.BufferAttribute(dark,3));
-
   geo.computeBoundingBox();
   const hMM = geo.boundingBox.max.y - geo.boundingBox.min.y, gap=3;
+
+  // color comes from the material now (single-color clay), so the ring bump map can show
+  const rgb = COLORS[state.colorIdx].rgb;
+  meshOuter.material.color.setRGB(rgb[0], rgb[1], rgb[2]);
+  meshInner.material.color.setRGB(rgb[0]*0.4, rgb[1]*0.4, rgb[2]*0.4);
 
   if (meshOuter.geometry) meshOuter.geometry.dispose();
   if (meshInner.geometry) meshInner.geometry.dispose();
@@ -446,7 +461,7 @@ let spinOn = true, sculpting = false;
 const SPIN_SPEED = 0.05;        // potter's-wheel pace — keeps spinning while you shape (visible via the wheel head)
 
 /* ---- camera orbit (reused math; gated so sculpt-drag never orbits) ---- */
-let camAngleY=0, camAngleX=1.26, camDist=360;   // head-on, slightly above — see the silhouette AND the spinning wheel head
+let camAngleY=Math.PI/8, camAngleX=0.92, camDist=375;   // 3/4 view looking DOWN into the pot (like Google) — see the opening + wheel
 function updateCamera(){
   const cy=Math.cos(camAngleX)*camDist, rad=Math.sin(camAngleX)*camDist;
   const focusY = H/2;
@@ -690,6 +705,6 @@ document.getElementById('downloadBtn').addEventListener('click', async ()=>{
 initClay(); initMeshes(); resizeRenderer(); updateMesh(); buildColorGrid(); updateCamera(); animate();
 document.getElementById('brushVal').textContent=(BRUSH*(H/(N-1))/10).toFixed(1)+'cm';
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">sculpt v3</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">sculpt v4</div>
 </body>
 </html>
