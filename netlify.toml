@@ -1,4 +1,8 @@
 [build]
+  # This is a static HTML site — there is NO build step. We set an explicit no-op command so
+  # Netlify's Git deploys don't try to infer/run `npm run build` (which doesn't exist) and fail.
+  # Netlify still installs function deps from package.json and bundles the functions below.
+  command = "echo 'Static site — no build needed'"
   functions = "netlify/functions"
   publish = "."
 
