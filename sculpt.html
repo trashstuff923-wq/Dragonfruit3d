@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<!-- Dragonfruit 3D Pottery Wheel · v1 (Jun 19) · Google-Arts-style clay-throwing sculpt → real 3D print. Separate page; customize-vase.html untouched. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Throw on the Wheel — Dragonfruit 3D</title>
+<link rel="icon" type="image/x-icon" href="/favicon-logo.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32-logo.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/favicon-512-logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root { --primary:#ff0096; --secondary:#ff5ec7; --accent:#00d4ff; --dark:#0a0015; --darker:#050008; --card:#1a0a2e; --text:#e0e6ed; --text-dim:#8892a6; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Space Mono',monospace;background:var(--darker);color:var(--text);min-height:100vh}
+  nav{background:rgba(10,0,21,.92);backdrop-filter:blur(10px);padding:16px 32px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,0,150,.2)}
+  .nav-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+  .logo{display:flex;align-items:center;text-decoration:none}
+  .logo span{background:linear-gradient(135deg,#ff0096,#ff5ec7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;letter-spacing:2px}
+  .back{color:var(--accent);text-decoration:none;font-size:.85rem;letter-spacing:1px}
+  .header{text-align:center;padding:30px 20px 14px;max-width:900px;margin:0 auto}
+  h1{font-family:'Orbitron',sans-serif;font-size:clamp(1.8rem,5vw,2.6rem);font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:1px;margin-bottom:8px}
+  .header p{color:var(--text-dim);font-size:.9rem;max-width:600px;margin:0 auto}
+  .studio{max-width:1400px;margin:0 auto 60px;padding:0 20px;display:grid;grid-template-columns:1fr 400px;gap:24px}
+  @media (max-width:900px){.studio{grid-template-columns:1fr}}
+  .preview{background:linear-gradient(180deg,var(--card),var(--darker));border:1px solid rgba(255,0,150,.2);border-radius:12px;min-height:600px;position:relative;overflow:hidden}
+  #clayCanvas{display:block;width:100%!important;height:600px!important;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:grab}
+  #clayCanvas:active{cursor:grabbing}
+  .preview-overlay{position:absolute;bottom:14px;left:14px;color:var(--text-dim);font-size:.75rem;letter-spacing:1px;background:rgba(0,0,0,.5);padding:6px 10px;border-radius:4px;pointer-events:none;transition:opacity .5s}
+  .dim-display{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.6);border:1px solid var(--accent);padding:8px 12px;border-radius:6px;font-family:'Orbitron',sans-serif;font-size:.85rem;color:var(--accent);letter-spacing:1px;pointer-events:none}
+  .dim-display .v{color:#fff;font-weight:700}
+  .print-chip{position:absolute;top:54px;right:14px;background:rgba(0,0,0,.6);border:1px solid rgba(0,212,255,.4);padding:5px 10px;border-radius:6px;font-family:'Space Mono',monospace;font-size:.72rem;color:var(--accent);letter-spacing:1px;pointer-events:none}
+  .controls{background:var(--card);border:1px solid rgba(255,0,150,.2);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:18px;max-height:80vh;overflow-y:auto}
+  .controls::-webkit-scrollbar{width:6px}
+  .controls::-webkit-scrollbar-thumb{background:var(--primary);border-radius:3px}
+  .ctrl-section{display:flex;flex-direction:column;gap:10px}
+  .ctrl-label{font-family:'Orbitron',sans-serif;color:var(--accent);font-size:.75rem;letter-spacing:2px;font-weight:700}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .opt-btn{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);color:var(--text);padding:10px 6px;border-radius:6px;cursor:pointer;font-family:'Space Mono',monospace;font-size:.8rem;transition:all .15s;text-align:center;line-height:1.2}
+  .opt-btn:hover{border-color:var(--primary)}
+  .opt-btn.active{background:rgba(255,0,150,.15);border-color:var(--primary);color:var(--primary);font-weight:700}
+  .opt-btn .sub{display:block;font-size:.65rem;opacity:.7;margin-top:2px}
+  .slider-row{display:flex;flex-direction:column;gap:4px}
+  .slider-head{display:flex;justify-content:space-between;font-size:.8rem}
+  .slider-head .name{color:var(--text)}
+  .slider-head .val{color:var(--accent);font-weight:700}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;background:rgba(255,255,255,.1);border-radius:2px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;background:var(--primary);border-radius:50%;cursor:pointer;box-shadow:0 0 8px rgba(255,0,150,.5)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;background:var(--primary);border:none;border-radius:50%;cursor:pointer}
+  .color-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+  .color-sw{aspect-ratio:1/1;border-radius:4px;cursor:pointer;border:2px solid transparent;position:relative;transition:transform .1s}
+  .color-sw:hover{transform:scale(1.1)}
+  .color-sw.active{border-color:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .color-sw .surcharge{position:absolute;bottom:1px;right:2px;font-size:7px;color:#fff;font-weight:700;text-shadow:0 0 2px #000}
+  .price-box{background:linear-gradient(135deg,rgba(255,0,150,.15),rgba(0,212,255,.05));border:1px solid var(--primary);padding:16px;border-radius:8px}
+  .price-row{display:flex;justify-content:space-between;font-size:.78rem;padding:3px 0;color:var(--text-dim)}
+  .price-row.total{border-top:1px solid rgba(255,0,150,.3);margin-top:8px;padding-top:10px;color:var(--text);font-size:1rem;font-weight:700}
+  .price-row.total .val{font-family:'Orbitron',sans-serif;color:var(--primary);font-size:1.4rem}
+  .quote-btn{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border:none;padding:14px;border-radius:8px;font-family:'Orbitron',sans-serif;font-weight:900;font-size:.95rem;letter-spacing:1.5px;cursor:pointer;transition:transform .1s,box-shadow .2s}
+  .quote-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,0,150,.4)}
+  .download-btn{background:rgba(0,212,255,.08);color:var(--accent);border:1px solid var(--accent);padding:11px;border-radius:8px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:1.5px;cursor:pointer;transition:all .15s;width:100%;margin-top:8px}
+  .download-btn:hover{background:rgba(0,212,255,.18);transform:translateY(-1px)}
+  .download-btn:disabled{opacity:.5;cursor:wait}
+  .tool-btn{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);color:var(--text);padding:11px 6px;border-radius:6px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:1px;transition:all .15s}
+  .tool-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .tool-btn.on{background:rgba(0,212,255,.12);border-color:var(--accent);color:var(--accent)}
+  .cross-link{display:inline-block;margin-top:6px;color:var(--accent);font-size:.78rem;text-decoration:none;letter-spacing:.5px}
+  .cross-link:hover{text-decoration:underline}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--card);border:1px solid var(--primary);border-radius:12px;padding:30px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto}
+  .modal h2{font-family:'Orbitron',sans-serif;color:var(--primary);margin-bottom:16px;font-size:1.3rem}
+  .modal label{display:block;margin-bottom:4px;font-size:.8rem;color:var(--text-dim);letter-spacing:1px}
+  .modal input,.modal textarea{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);color:var(--text);padding:10px;border-radius:6px;margin-bottom:14px;font-family:'Space Mono',monospace;font-size:.9rem}
+  .modal input:focus,.modal textarea:focus{border-color:var(--primary);outline:none}
+  .modal-actions{display:flex;gap:10px}
+  .modal-actions button{flex:1;padding:12px;border:none;border-radius:6px;font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px;cursor:pointer}
+  .btn-cancel{background:rgba(255,255,255,.08);color:var(--text)}
+  .btn-submit{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff}
+  .spec-summary{background:rgba(0,212,255,.05);border-left:3px solid var(--accent);padding:10px 12px;margin-bottom:16px;font-size:.78rem;line-height:1.5;color:var(--text-dim)}
+  .spec-summary b{color:var(--accent)}
+  .success{background:rgba(0,212,255,.1);border:1px solid var(--accent);padding:20px;border-radius:8px;text-align:center;color:var(--accent)}
+  .info-tip{font-size:.7rem;color:var(--text-dim);font-style:italic;margin-top:2px}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">
+      <svg width="36" height="36" viewBox="0 0 512 512" style="vertical-align:middle;margin-right:10px">
+        <polygon points="256,26 455.19,141 455.19,371 256,486 56.81,371 56.81,141" fill="#ff0096"/>
+        <polygon points="256,126 368.56,191 368.56,321 256,386 143.44,321 143.44,191" fill="#00d4ff"/>
+      </svg>
+      <span>DRAGONFRUIT 3D</span>
+    </a>
+    <a href="/" class="back">← BACK TO HOME</a>
+  </div>
+</nav>
+
+<div class="header">
+  <h1>THROW ON THE WHEEL</h1>
+  <p>// press &amp; drag the spinning clay — pull OUT to widen, push IN to narrow. then we print it for real.</p>
+  <a href="/customize-vase.html" class="cross-link">// prefer sliders? use the classic vase designer →</a>
+</div>
+
+<div class="studio">
+  <div class="preview">
+    <canvas id="clayCanvas"></canvas>
+    <div class="dim-display" id="dimDisplay"><span class="v">18.0</span>cm tall · <span class="v">8.0</span>cm wide</div>
+    <div class="print-chip" id="printChip">// PRINTABLE ✓</div>
+    <div class="preview-overlay" id="overlay">// press &amp; drag the clay · two fingers (or right-drag) to look around</div>
+  </div>
+
+  <div class="controls">
+    <div class="ctrl-section">
+      <div class="ctrl-label">// TOOLS</div>
+      <div class="grid-3">
+        <button class="tool-btn" id="resetBtn">RESET CLAY</button>
+        <button class="tool-btn" id="smoothBtn">SMOOTH</button>
+        <button class="tool-btn" id="undoBtn">UNDO</button>
+      </div>
+      <div class="grid-2" style="margin-top:8px">
+        <button class="tool-btn on" id="spinBtn">SPIN: ON</button>
+        <button class="tool-btn" id="rotateBtn">ROTATE VIEW</button>
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="slider-row">
+        <div class="slider-head"><span class="name">Brush size</span><span class="val" id="brushVal">2.1cm</span></div>
+        <input type="range" id="brushSlider" min="6" max="24" step="1" value="14">
+      </div>
+      <div class="slider-row">
+        <div class="slider-head"><span class="name">Height</span><span class="val" id="heightVal">18.0cm</span></div>
+        <input type="range" id="heightSlider" min="60" max="250" step="5" value="180">
+      </div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-label" id="colorLabel">// COLOR — Cyan</div>
+      <div class="color-grid" id="colorGrid"></div>
+    </div>
+
+    <div class="ctrl-section">
+      <div class="ctrl-label">// PRICE BREAKDOWN</div>
+      <div class="price-box">
+        <div class="price-row"><span>Material</span><span class="val" id="priceMaterial">$0.00</span></div>
+        <div class="price-row"><span>Print time</span><span class="val" id="priceTime">$0.00</span></div>
+        <div class="price-row"><span>Color surcharge</span><span class="val" id="priceColor">$0.00</span></div>
+        <div class="price-row"><span>Failure buffer (5%)</span><span class="val" id="priceFailure">$0.00</span></div>
+        <div class="price-row total"><span>TOTAL</span><span class="val" id="priceTotal">$0.00</span></div>
+      </div>
+      <div class="info-tip" id="weightInfo">~0g · ~0h print time</div>
+    </div>
+
+    <button class="quote-btn" id="quoteBtn">REQUEST CUSTOM PRINT →</button>
+    <button class="download-btn" id="downloadBtn" style="display:none" title="Staff only: download a 3MF for Bambu Studio.">⬇ DOWNLOAD 3MF (STAFF)</button>
+  </div>
+</div>
+
+<!-- Quote modal — posts to the SAME custom-vase Netlify form as the slider customizer -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2 id="modalTitle">Request Your Hand-Thrown Vase</h2>
+    <div id="modalBody">
+      <div class="spec-summary" id="specSummary"></div>
+      <form name="custom-vase" method="POST" data-netlify="true" enctype="multipart/form-data" id="quoteForm">
+        <input type="hidden" name="form-name" value="custom-vase">
+        <input type="hidden" name="vase-spec" id="hiddenSpec">
+        <input type="hidden" name="vase-price" id="hiddenPrice">
+        <input type="file" name="vase-3mf" id="hidden3mfInput" style="display:none" accept=".3mf">
+        <label>Your Name</label><input type="text" name="name" required>
+        <label>Email</label><input type="email" name="email" required>
+        <label>Phone (optional)</label><input type="tel" name="phone">
+        <label>Notes / special requests</label><textarea name="notes" rows="3" placeholder="Any extra requests?"></textarea>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" id="cancelBtn">Cancel</button>
+          <button type="submit" class="btn-submit">Send Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden detection form for Netlify (same custom-vase form, with file field). DO NOT REMOVE. -->
+<form name="custom-vase" netlify enctype="multipart/form-data" hidden>
+  <input type="text" name="name"><input type="email" name="email"><input type="tel" name="phone">
+  <input type="text" name="vase-spec"><input type="text" name="vase-price"><textarea name="notes"></textarea>
+  <input type="file" name="vase-3mf">
+</form>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+/* ============================================================================
+   DRAGONFRUIT 3D — POTTERY WHEEL (sculpt mode) v1
+   Single source of truth = profileR[] (radius in mm at N heights).
+   Reuses customize-vase.html conventions: COLORS, COST/pricing, two-layer
+   hollow render, geometry-only 3MF export, custom-vase Netlify form.
+   ============================================================================ */
+
+// ---- shared palette (verbatim from customize-vase.html) ----
+const COLORS = [
+  {name:'Yellow',hex:'#FFD700',rgb:[1.0,0.843,0.0],surcharge:0},
+  {name:'Cyan',hex:'#00d4ff',rgb:[0.0,0.831,1.0],surcharge:0},
+  {name:'Purple',hex:'#9D4EDD',rgb:[0.616,0.306,0.867],surcharge:0},
+  {name:'Green',hex:'#00ff9d',rgb:[0.0,1.0,0.616],surcharge:0},
+  {name:'Red',hex:'#FF006E',rgb:[1.0,0.0,0.431],surcharge:0},
+  {name:'Orange',hex:'#FF8C00',rgb:[1.0,0.549,0.0],surcharge:0},
+  {name:'Black',hex:'#1a1a1a',rgb:[0.102,0.102,0.102],surcharge:0},
+  {name:'White',hex:'#FFFFFF',rgb:[1.0,1.0,1.0],surcharge:0},
+  {name:'Brown',hex:'#8B4513',rgb:[0.545,0.271,0.075],surcharge:0},
+  {name:'Ice Blue',hex:'#ADD8E6',rgb:[0.678,0.847,0.902],surcharge:1},
+  {name:'Glow',hex:'#00FFFF',rgb:[0.0,1.0,1.0],surcharge:3},
+  {name:'Gradient',hex:'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',rgb:[0.61,0.39,0.74],surcharge:4,isGradient:true},
+];
+const COST = {
+  filamentPerGram: 0.05, printRateGramsPerHr: 15, machineHourly: 2,
+  brimGrams: 2, failureRate: 0.05, markup: 1.4, setupFee: 3, minOrder: 12,
+};
+// minimal state for reuse (single-color sculpt)
+const state = { colorIdx: 1, estimatedGrams: 0, estimatedHours: 0 };
+
+// ---- data model: the vase profile ----
+const N = 120;                          // profile samples, base → top
+let   H = 180;                          // current height in mm (18cm default)
+const profileR = new Float32Array(N);   // radius mm at each band — THE source of truth
+function yAt(i){ return (i/(N-1)) * H; }
+
+const MIN_R = 1.5, MAX_R = 110, H_MAX = 250, DRDY_MAX = 1.0, BASE_RAMP = 6;
+
+function initClay(){
+  for (let i=0;i<N;i++){
+    const t = i/(N-1);
+    profileR[i] = 18 + 22*Math.sin(t*Math.PI*0.92);   // base ~4mm, belly ~40mm, slight close at top
+  }
+  clampProfile();
+}
+
+// Closed-bottom + global printability guarantee, bottom-up. Called after EVERY mutation.
+// Clamps each band to [MIN_R, MAX_R] and limits OUTWARD slope vs the band below to 45° (DRDY_MAX),
+// so no profile can ever produce an unprintable overhang in spiral-vase mode. Inward (narrowing)
+// is unrestricted (cone tips print fine). i=0 is pinned to 0 = closed bottom disc.
+function clampProfile(){
+  profileR[0] = 0;
+  const dy = H/(N-1);
+  for (let i=1;i<N;i++){
+    let r = Math.min(MAX_R, Math.max(MIN_R, profileR[i]));
+    const maxOut = profileR[i-1] + DRDY_MAX*dy;       // 45° outward limit vs band below
+    if (r > maxOut) r = maxOut;
+    profileR[i] = r;
+  }
+  if (profileR[1] > BASE_RAMP) profileR[1] = BASE_RAMP; // gentle lift off the axis
+}
+
+/* ---- Three.js scene (copied 1:1 from customize-vase.html) ---- */
+const canvas = document.getElementById('clayCanvas');
+const scene = new THREE.Scene(); scene.background = null;
+const camera = new THREE.PerspectiveCamera(40,1,.1,2000);
+const renderer = new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));   // cap at 2 — save fill-rate on 3x phones
+function resizeRenderer(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+window.addEventListener('resize',resizeRenderer);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0xc0c0c0, 1.1));
+const keyLight = new THREE.DirectionalLight(0xffffff, 0.25);
+keyLight.position.set(120, 200, 100); scene.add(keyLight);
+
+const floor=new THREE.Mesh(new THREE.CircleGeometry(180,64),new THREE.MeshBasicMaterial({color:0x1a0a2e,transparent:true,opacity:.35}));
+floor.rotation.x=-Math.PI/2; floor.position.y=-0.5; scene.add(floor);
+const gridHelper = new THREE.GridHelper(300, 30, 0x4a3060, 0x2a1840);
+gridHelper.position.y=-0.4; gridHelper.material.opacity=0.35; gridHelper.material.transparent=true; scene.add(gridHelper);
+
+let vaseGroup = null;
+
+/* ---- profile → lathe points (leading (0,0) closes the bottom disc) ---- */
+function profileToPoints(segHint){
+  const pts = [ new THREE.Vector2(0,0) ];
+  for (let i=0;i<N;i++) pts.push(new THREE.Vector2(Math.max(0.0001, profileR[i]), yAt(i)));
+  return pts;
+}
+
+/* ---- rebuild mesh: lathe + two-layer hollow (copied from buildVase) ---- */
+function rebuild(){
+  const keepRot = vaseGroup ? vaseGroup.rotation.y : 0;
+  const geo = new THREE.LatheGeometry(profileToPoints(), 96);
+  const rgb = COLORS[state.colorIdx].rgb;
+  const vc = new Float32Array(geo.attributes.position.count*3);
+  for (let i=0;i<vc.length;i+=3){ vc[i]=rgb[0]; vc[i+1]=rgb[1]; vc[i+2]=rgb[2]; }
+  geo.setAttribute('color', new THREE.BufferAttribute(vc,3));
+
+  const matOuter = new THREE.MeshLambertMaterial({ vertexColors:true, side:THREE.FrontSide });
+  const meshOuter = new THREE.Mesh(geo, matOuter);
+
+  const innerGeo = geo.clone();
+  const dark = new Float32Array(vc.length);
+  for (let i=0;i<vc.length;i++) dark[i] = vc[i]*0.4;
+  innerGeo.setAttribute('color', new THREE.BufferAttribute(dark,3));
+  const meshInner = new THREE.Mesh(innerGeo, new THREE.MeshLambertMaterial({ vertexColors:true, side:THREE.BackSide }));
+
+  geo.computeBoundingBox();
+  const hMM = geo.boundingBox.max.y - geo.boundingBox.min.y, gap=3;
+  meshInner.scale.set(0.93, Math.max(0.5,(hMM-2*gap)/hMM), 0.93);
+  meshInner.position.y = gap;
+
+  if (vaseGroup){
+    scene.remove(vaseGroup);
+    vaseGroup.children.forEach(c => { if(c.geometry)c.geometry.dispose(); if(c.material)c.material.dispose(); });
+    vaseGroup = null;
+  }
+  vaseGroup = new THREE.Group();
+  vaseGroup.add(meshOuter); vaseGroup.add(meshInner);
+  vaseGroup.rotation.y = keepRot;                 // preserve spin angle across rebuilds
+  scene.add(vaseGroup);
+
+  updatePrice(); updateDimensions(); checkPrintability();
+}
+
+/* ---- pricing: reuse COST + formula; surface-of-revolution volume integral ---- */
+function estimateVolume(){               // cm³ of wall shell
+  const wall_cm = 0.15;
+  const dy_cm = (H/(N-1))/10;
+  let lateral = 0;
+  for (let i=1;i<N;i++){
+    const r0 = profileR[i-1]/10, r1 = profileR[i]/10;
+    const slant = Math.sqrt((r1-r0)*(r1-r0) + dy_cm*dy_cm);
+    lateral += Math.PI*(r0+r1)*slant;    // frustum lateral area
+  }
+  const baseR = Math.max(profileR[1], profileR[2])/10;
+  const baseArea = Math.PI*baseR*baseR;  // closed bottom disc
+  return (lateral + baseArea) * wall_cm;
+}
+function updatePrice(){
+  const grams = estimateVolume()*1.24;
+  const matCost = (grams+COST.brimGrams)*COST.filamentPerGram;
+  const hours = (grams+COST.brimGrams)/COST.printRateGramsPerHr;
+  const timeCost = hours*COST.machineHourly;
+  const colorSur = COLORS[state.colorIdx].surcharge;
+  const baseCosts = matCost + timeCost;                 // complexity = 1 for a smooth lathe
+  const failureBuffer = baseCosts*COST.failureRate;
+  const subtotal = (baseCosts + failureBuffer + colorSur)*COST.markup + COST.setupFee;
+  const total = Math.max(COST.minOrder, subtotal);
+  state.estimatedGrams = grams; state.estimatedHours = hours;
+  document.getElementById('priceMaterial').textContent = '$'+matCost.toFixed(2);
+  document.getElementById('priceTime').textContent = '$'+timeCost.toFixed(2);
+  document.getElementById('priceColor').textContent = colorSur ? '+$'+colorSur.toFixed(2) : '$0.00';
+  document.getElementById('priceFailure').textContent = '$'+failureBuffer.toFixed(2);
+  document.getElementById('priceTotal').textContent = '$'+total.toFixed(2);
+  document.getElementById('weightInfo').textContent = `~${grams.toFixed(0)}g · ~${hours.toFixed(1)}h print time`;
+}
+function updateDimensions(){
+  let maxR = 0; for (let i=0;i<N;i++) maxR = Math.max(maxR, profileR[i]);
+  const heightCm = H/10, widthCm = 2*maxR/10;
+  const fits = heightCm<=25 && widthCm<=23;             // always true (auto-clamped) — kept for parity
+  const warn = fits ? '' : ` · <span style="color:#ff9d00">⚠ exceeds P1S</span>`;
+  document.getElementById('dimDisplay').innerHTML =
+    `<span class="v">${heightCm.toFixed(1)}</span>cm tall · <span class="v">${widthCm.toFixed(1)}</span>cm wide${warn}`;
+}
+function checkPrintability(){
+  let maxR = 0; for (let i=0;i<N;i++) maxR = Math.max(maxR, profileR[i]);
+  let msg = '// PRINTABLE ✓', warn = false;
+  if (2*maxR > 215)               { msg = '// CHECK: near max width'; warn = true; }
+  else if (profileR[N-1] < MIN_R+1){ msg = '// CHECK: tip nearly closed'; warn = true; }
+  const el = document.getElementById('printChip');
+  el.textContent = msg;
+  el.style.color = warn ? '#ff9d00' : 'var(--accent)';
+  el.style.borderColor = warn ? 'rgba(255,157,0,.5)' : 'rgba(0,212,255,.4)';
+}
+
+/* ---- raycast: closest approach to world Y axis (spin- & orbit-invariant) ---- */
+const raycaster = new THREE.Raycaster();
+let lastHitY = H/2;
+function pickFromPointer(clientX, clientY){
+  const rect = canvas.getBoundingClientRect();
+  const ndcX =  ((clientX-rect.left)/rect.width )*2 - 1;
+  const ndcY = -((clientY-rect.top )/rect.height)*2 + 1;
+  raycaster.setFromCamera({x:ndcX, y:ndcY}, camera);
+  const O = raycaster.ray.origin, D = raycaster.ray.direction;
+  const a = D.x*D.x + D.z*D.z;
+  const b = D.x*O.x + D.z*O.z;
+  const t = a > 1e-6 ? -b/a : 0;
+  const px = O.x + D.x*t, pz = O.z + D.z*t;
+  const hitY = a > 1e-6 ? (O.y + D.y*t) : lastHitY;
+  lastHitY = hitY;
+  const fy = THREE.MathUtils.clamp(hitY / H, 0, 1);
+  const idx = Math.round(fy*(N-1));
+  const cursorR = Math.sqrt(px*px + pz*pz);
+  return { idx, cursorR };
+}
+
+/* ---- brush: Gaussian ease toward cursor radius, then global clamp ---- */
+let BRUSH = 14;                 // half-width in samples (slider 6..24)
+const STRENGTH = 0.35;
+function applyBrush(idx, cursorR){
+  for (let i=1;i<N;i++){
+    const d = i - idx;
+    const w = Math.exp(-(d*d)/(2*BRUSH*BRUSH));
+    if (w < 0.01) continue;
+    profileR[i] += (cursorR - profileR[i]) * STRENGTH * w;
+  }
+  laplacian(1, 0.18);           // tiny anti-jaggy pass
+  clampProfile();               // global printability + closed-bottom guarantee
+}
+function laplacian(passes, lambda){
+  for (let p=0;p<passes;p++){
+    const src = profileR.slice();
+    for (let i=1;i<N-1;i++){
+      const avg = (src[i-1] + src[i+1]) * 0.5;
+      profileR[i] = src[i] + (avg - src[i]) * lambda;
+    }
+  }
+  clampProfile();
+}
+
+/* ---- spin ---- */
+let spinOn = true, sculpting = false;
+const SPIN_SPEED = 0.025;
+
+/* ---- camera orbit (reused math; gated so sculpt-drag never orbits) ---- */
+let camAngleY=Math.PI/4, camAngleX=1.15, camDist=380;
+function updateCamera(){
+  const cy=Math.cos(camAngleX)*camDist, rad=Math.sin(camAngleX)*camDist;
+  const focusY = H/2;
+  camera.position.set(Math.cos(camAngleY)*rad, cy+focusY, Math.sin(camAngleY)*rad);
+  camera.lookAt(0, focusY, 0);
+}
+
+/* ---- input: Pointer Events, one path. left/1-finger=sculpt, right/2-finger=orbit ---- */
+let mode = 'sculpt';            // 'sculpt' | 'rotate'
+let pending = null, dirty = false;
+const undoStack = [];
+const pointers = new Map();     // active pointers for multi-touch
+let orbitPrev = null, pinchPrev = 0;
+
+function pushUndo(){ undoStack.push(profileR.slice()); if (undoStack.length>20) undoStack.shift(); }
+function fadeOverlay(){ const o=document.getElementById('overlay'); if(o) o.style.opacity='0'; }
+
+function isOrbitGesture(e){
+  return (e.pointerType!=='touch' && e.button===2) || mode==='rotate' || pointers.size>=2;
+}
+
+canvas.addEventListener('contextmenu', e=>e.preventDefault());   // allow right-drag orbit w/o menu
+canvas.addEventListener('pointerdown', e=>{
+  pointers.set(e.pointerId, {x:e.clientX,y:e.clientY});
+  fadeOverlay();
+  if (isOrbitGesture(e)){
+    sculpting = false;
+    orbitPrev = {x:e.clientX,y:e.clientY};
+    if (pointers.size>=2){ pinchPrev = pinchDist(); }
+    e.preventDefault(); return;
+  }
+  // sculpt
+  canvas.setPointerCapture(e.pointerId);
+  pushUndo();
+  sculpting = true;
+  if (navigator.vibrate) navigator.vibrate(8);
+  pending = {x:e.clientX, y:e.clientY}; dirty = true;
+  e.preventDefault();
+}, {passive:false});
+
+canvas.addEventListener('pointermove', e=>{
+  if (pointers.has(e.pointerId)) pointers.set(e.pointerId, {x:e.clientX,y:e.clientY});
+  // two-finger orbit + pinch zoom
+  if (pointers.size>=2){
+    const c = pointersCentroid();
+    if (orbitPrev){ camAngleY -= (c.x-orbitPrev.x)*.01; camAngleX -= (c.y-orbitPrev.y)*.01; camAngleX=Math.max(0.15,Math.min(Math.PI-0.15,camAngleX)); updateCamera(); }
+    orbitPrev = c;
+    const pd = pinchDist();
+    if (pinchPrev>0){ camDist=Math.max(150,Math.min(800,camDist*(pinchPrev/pd))); updateCamera(); }
+    pinchPrev = pd;
+    e.preventDefault(); return;
+  }
+  if (mode==='rotate' && orbitPrev){
+    camAngleY -= (e.clientX-orbitPrev.x)*.01; camAngleX -= (e.clientY-orbitPrev.y)*.01;
+    camAngleX=Math.max(0.15,Math.min(Math.PI-0.15,camAngleX)); updateCamera();
+    orbitPrev = {x:e.clientX,y:e.clientY}; e.preventDefault(); return;
+  }
+  if (!sculpting) return;
+  pending = {x:e.clientX, y:e.clientY}; dirty = true;   // stash only — rebuild in rAF
+  e.preventDefault();
+}, {passive:false});
+
+function endPointer(e){
+  pointers.delete(e.pointerId);
+  if (pointers.size<2){ pinchPrev = 0; }
+  if (pointers.size===0){ sculpting = false; orbitPrev = null; }
+}
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', endPointer);
+canvas.addEventListener('pointerleave', e=>{ if(pointers.size===0) sculpting=false; });
+canvas.addEventListener('wheel', e=>{ e.preventDefault(); camDist=Math.max(150,Math.min(800,camDist+e.deltaY*.5)); updateCamera(); }, {passive:false});
+
+function pointersCentroid(){ let x=0,y=0,n=0; pointers.forEach(p=>{x+=p.x;y+=p.y;n++;}); return {x:x/n,y:y/n}; }
+function pinchDist(){ const a=[...pointers.values()]; if(a.length<2)return 0; const dx=a[0].x-a[1].x,dy=a[0].y-a[1].y; return Math.hypot(dx,dy); }
+
+/* ---- core loop ---- */
+function animate(){
+  requestAnimationFrame(animate);
+  if (vaseGroup && spinOn && !sculpting) vaseGroup.rotation.y += SPIN_SPEED;
+  if (dirty && pending){
+    const { idx, cursorR } = pickFromPointer(pending.x, pending.y);
+    applyBrush(idx, cursorR);
+    rebuild();
+    dirty = false;
+  }
+  renderer.render(scene, camera);
+}
+
+/* ---- color grid (simplified single-color) ---- */
+function updateColorLabel(){
+  const c = COLORS[state.colorIdx];
+  document.getElementById('colorLabel').innerHTML =
+    `// COLOR — <span style="color:var(--primary);font-weight:700">${c.name}${c.surcharge?` (+$${c.surcharge})`:''}</span>`;
+}
+function buildColorGrid(){
+  const g=document.getElementById('colorGrid'); g.innerHTML='';
+  updateColorLabel();
+  COLORS.forEach((c,i)=>{
+    const sw=document.createElement('div');
+    sw.className='color-sw'+(i===state.colorIdx?' active':'');
+    sw.style.background=c.hex;
+    sw.title=c.name+(c.surcharge?` (+$${c.surcharge})`:'');
+    if(c.surcharge){ const s=document.createElement('span'); s.className='surcharge'; s.textContent='+$'+c.surcharge; sw.appendChild(s); }
+    sw.addEventListener('click',()=>{ state.colorIdx=i; buildColorGrid(); rebuild(); });
+    g.appendChild(sw);
+  });
+}
+
+/* ---- 3MF export (geometry-only, Bambu-safe — verbatim from customize-vase.html) ---- */
+function _xmlEsc(s){ return String(s).replace(/[<>&"']/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&apos;'}[m])); }
+function build3MFContentTypes(){
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">\n  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>\n  <Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>\n</Types>\n';
+}
+function build3MFRels(){
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\n  <Relationship Target="/3D/3dmodel.model" Id="rel1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>\n</Relationships>\n';
+}
+function build3MFModel(geometry){
+  const pos = geometry.getAttribute('position');
+  const vertCount = pos.count;
+  if (vertCount % 3 !== 0) throw new Error('Expected non-indexed geometry (3 verts per face)');
+  const triCount = vertCount/3;
+  let minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity,minY=Infinity;
+  for (let i=0;i<vertCount;i++){ const x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i); if(x<minX)minX=x; if(x>maxX)maxX=x; if(z<minZ)minZ=z; if(z>maxZ)maxZ=z; if(y<minY)minY=y; }
+  const cx=(minX+maxX)/2, cz=(minZ+maxZ)/2;
+  const vertLines = new Array(vertCount);
+  for (let i=0;i<vertCount;i++){
+    const nx=(pos.getX(i)-cx).toFixed(3);
+    const ny=(-(pos.getZ(i)-cz)).toFixed(3);   // Y-up → Z-up
+    const nz=(pos.getY(i)-minY).toFixed(3);
+    vertLines[i]='          <vertex x="'+nx+'" y="'+ny+'" z="'+nz+'"/>';
+  }
+  const triLines = new Array(triCount);
+  for (let f=0;f<triCount;f++){ const v0=f*3; triLines[f]='     <triangle v1="'+v0+'" v2="'+(v0+1)+'" v3="'+(v0+2)+'"/>'; }
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<model unit="millimeter" xml:lang="en-US"\n       xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">\n' +
+    ' <metadata name="Application">DragonfruitPotteryWheel</metadata>\n <resources>\n  <object id="1" type="model">\n   <mesh>\n    <vertices>\n' +
+    vertLines.join('\n') + '\n    </vertices>\n    <triangles>\n' + triLines.join('\n') + '\n    </triangles>\n   </mesh>\n  </object>\n </resources>\n <build>\n  <item objectid="1"/>\n </build>\n</model>\n';
+}
+function buildPrintGeometry(){
+  let geo = new THREE.LatheGeometry(profileToPoints(), 128).toNonIndexed();  // toNonIndexed REQUIRED
+  return geo;
+}
+async function build3MFBlob(){
+  if (typeof JSZip==='undefined') throw new Error('JSZip not loaded yet — refresh the page.');
+  const outerGeo = buildPrintGeometry();
+  const modelXML = build3MFModel(outerGeo);
+  const zip = new JSZip();
+  zip.file('[Content_Types].xml', build3MFContentTypes());
+  zip.folder('_rels').file('.rels', build3MFRels());
+  zip.folder('3D').file('3dmodel.model', modelXML);
+  return await zip.generateAsync({ type:'blob', mimeType:'model/3mf', compression:'DEFLATE' });
+}
+
+/* ---- UI wiring ---- */
+document.getElementById('resetBtn').addEventListener('click', ()=>{ pushUndo(); initClay(); rebuild(); });
+document.getElementById('smoothBtn').addEventListener('click', ()=>{ pushUndo(); laplacian(4,0.5); rebuild(); });
+document.getElementById('undoBtn').addEventListener('click', ()=>{ if(undoStack.length){ profileR.set(undoStack.pop()); clampProfile(); rebuild(); } });
+document.getElementById('spinBtn').addEventListener('click', e=>{ spinOn=!spinOn; e.target.textContent='SPIN: '+(spinOn?'ON':'OFF'); e.target.classList.toggle('on',spinOn); });
+const rotateBtn = document.getElementById('rotateBtn');
+rotateBtn.addEventListener('click', ()=>{ mode = (mode==='rotate')?'sculpt':'rotate'; rotateBtn.classList.toggle('on', mode==='rotate'); rotateBtn.textContent = mode==='rotate'?'SCULPT':'ROTATE VIEW'; });
+const brushSlider = document.getElementById('brushSlider');
+brushSlider.addEventListener('input', e=>{ BRUSH=parseInt(e.target.value); document.getElementById('brushVal').textContent=(BRUSH*(H/(N-1))/10).toFixed(1)+'cm'; });
+const heightSlider = document.getElementById('heightSlider');
+heightSlider.addEventListener('input', e=>{ H=Math.min(H_MAX,parseInt(e.target.value)); document.getElementById('heightVal').textContent=(H/10).toFixed(1)+'cm'; document.getElementById('brushVal').textContent=(BRUSH*(H/(N-1))/10).toFixed(1)+'cm'; clampProfile(); rebuild(); updateCamera(); });
+
+/* ---- quote modal + custom-vase form + 3MF attach (pattern from customize-vase.html) ---- */
+const modal = document.getElementById('modalBg');
+let _pendingVase3mfBlob = null, _pendingVase3mfReady = false;
+async function _prepareVase3mfForSubmit(){
+  _pendingVase3mfReady=false; _pendingVase3mfBlob=null;
+  try { _pendingVase3mfBlob = await build3MFBlob(); _pendingVase3mfReady=true; }
+  catch(err){ console.warn('[3MF] background generation failed:', err); }
+}
+document.getElementById('quoteBtn').addEventListener('click', ()=>{
+  _prepareVase3mfForSubmit();
+  let maxR=0; for(let i=0;i<N;i++) maxR=Math.max(maxR,profileR[i]);
+  const lines = [
+    `<b>Style:</b> Hand-thrown on the wheel`,
+    `<b>Height:</b> ${(H/10).toFixed(1)} cm`,
+    `<b>Max width:</b> ${(2*maxR/10).toFixed(1)} cm`,
+    `<b>Color:</b> ${COLORS[state.colorIdx].name}`,
+    `<b>Estimated weight:</b> ~${state.estimatedGrams.toFixed(0)}g`,
+    `<b>Estimated print time:</b> ~${state.estimatedHours.toFixed(1)}h`,
+    `<b>Total price:</b> ${document.getElementById('priceTotal').textContent} SGD`,
+  ];
+  document.getElementById('specSummary').innerHTML = lines.join('<br>');
+  document.getElementById('hiddenSpec').value = JSON.stringify({
+    mode:'sculpt', heightCm:(H/10).toFixed(1), maxWidthCm:(2*maxR/10).toFixed(1),
+    color:COLORS[state.colorIdx].name, profileR:Array.from(profileR).map(r=>+r.toFixed(2)),
+    estGrams:state.estimatedGrams.toFixed(0), estHours:state.estimatedHours.toFixed(1),
+  });
+  document.getElementById('hiddenPrice').value = document.getElementById('priceTotal').textContent;
+  modal.classList.add('show');
+});
+document.getElementById('cancelBtn').addEventListener('click', ()=>modal.classList.remove('show'));
+modal.addEventListener('click', e=>{ if(e.target===modal) modal.classList.remove('show'); });
+
+document.getElementById('quoteForm').addEventListener('submit', (e)=>{
+  if (!_pendingVase3mfReady){
+    e.preventDefault();
+    const btn=e.target.querySelector('.btn-submit'); const t=btn.textContent;
+    btn.textContent='Preparing file…'; btn.disabled=true;
+    _prepareVase3mfForSubmit().finally(()=>{ btn.textContent=t; btn.disabled=false; e.target.requestSubmit?e.target.requestSubmit():e.target.submit(); });
+    return;
+  }
+  if (_pendingVase3mfBlob){
+    try {
+      const filename=`vase-sculpt-${COLORS[state.colorIdx].name.toLowerCase()}-${Date.now()}.3mf`;
+      const file=new File([_pendingVase3mfBlob], filename, {type:'model/3mf'});
+      const dt=new DataTransfer(); dt.items.add(file);
+      document.getElementById('hidden3mfInput').files=dt.files;
+    } catch(err){ console.warn('[3MF] attach failed:', err); }
+  }
+  setTimeout(()=>{ document.getElementById('modalBody').innerHTML=`<div class="success"><h3 style="font-family:Orbitron;margin-bottom:8px">REQUEST SENT 🎉</h3><p>Thanks! We'll review your hand-thrown vase and email you within 24 hours.</p><button class="btn-cancel" style="margin-top:18px;padding:10px 18px;border:none;border-radius:6px;cursor:pointer" onclick="document.getElementById('modalBg').classList.remove('show');location.reload()">Done</button></div>`; },100);
+});
+
+/* ---- staff 3MF download ---- */
+(function(){ if(new URLSearchParams(location.search).has('staff')){ const b=document.getElementById('downloadBtn'); if(b)b.style.display=''; } })();
+document.getElementById('downloadBtn').addEventListener('click', async ()=>{
+  const btn=document.getElementById('downloadBtn'); const orig=btn.textContent;
+  btn.disabled=true; btn.textContent='⏳ BUILDING 3MF…';
+  try {
+    const blob=await build3MFBlob();
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=`dragonfruit-sculpt-${COLORS[state.colorIdx].name.toLowerCase()}.3mf`;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(a.href); },1500);
+    btn.textContent='✅ DOWNLOADED'; setTimeout(()=>{ btn.textContent=orig; btn.disabled=false; },2500);
+  } catch(err){ console.error('[3MF] export failed:', err); btn.textContent='❌ FAILED — SEE CONSOLE'; setTimeout(()=>{ btn.textContent=orig; btn.disabled=false; },3000); }
+});
+
+/* ---- boot ---- */
+initClay(); resizeRenderer(); rebuild(); buildColorGrid(); updateCamera(); animate();
+document.getElementById('brushVal').textContent=(BRUSH*(H/(N-1))/10).toFixed(1)+'cm';
+</script>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">sculpt v1</div>
+</body>
+</html>
