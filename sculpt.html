@@ -429,7 +429,7 @@ function pickFromPointer(clientX, clientY){
 
 /* ---- brush: Gaussian ease toward cursor radius, then global clamp ---- */
 let BRUSH = 9;                  // half-width in samples (slider 6..24)
-const PRESS_RATE = 0.5;         // mm of clay that yields PER FRAME while you hold (× brush weight)
+const PRESS_RATE = 0.13;        // mm of clay that yields PER FRAME while you hold (× brush weight) — ~7-8mm/s, controllable
 // PRESSURE model (not position): while you hold, the clay slowly yields in the pressed direction —
 // dir = -1 pushes the wall IN (denting the body), dir = +1 pulls it OUT. The cursor only selects the
 // height + (at touch-down) which direction. Holding longer = more give, exactly like pressing real clay.
