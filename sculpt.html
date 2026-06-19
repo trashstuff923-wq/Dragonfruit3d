@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dragonfruit 3D Pottery Wheel · v1 (Jun 19) · Google-Arts-style clay-throwing sculpt → real 3D print. Separate page; customize-vase.html untouched. -->
+<!-- Dragonfruit 3D Pottery Wheel · v2 (Jun 19) · REAL wheel feel: continuous spin + press-and-HOLD shaping (hold steady opens a ring) instead of drag-a-curve. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -30,6 +30,7 @@
   .dim-display{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.6);border:1px solid var(--accent);padding:8px 12px;border-radius:6px;font-family:'Orbitron',sans-serif;font-size:.85rem;color:var(--accent);letter-spacing:1px;pointer-events:none}
   .dim-display .v{color:#fff;font-weight:700}
   .print-chip{position:absolute;top:54px;right:14px;background:rgba(0,0,0,.6);border:1px solid rgba(0,212,255,.4);padding:5px 10px;border-radius:6px;font-family:'Space Mono',monospace;font-size:.72rem;color:var(--accent);letter-spacing:1px;pointer-events:none}
+  .contact-dot{position:absolute;width:26px;height:26px;border-radius:50%;border:2px solid var(--accent);background:rgba(0,212,255,.22);box-shadow:0 0 18px var(--accent);pointer-events:none;transform:translate(-50%,-50%);display:none;z-index:6}
   .controls{background:var(--card);border:1px solid rgba(255,0,150,.2);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:18px;max-height:80vh;overflow-y:auto}
   .controls::-webkit-scrollbar{width:6px}
   .controls::-webkit-scrollbar-thumb{background:var(--primary);border-radius:3px}
@@ -100,7 +101,7 @@
 
 <div class="header">
   <h1>THROW ON THE WHEEL</h1>
-  <p>// press &amp; drag the spinning clay — pull OUT to widen, push IN to narrow. then we print it for real.</p>
+  <p>// press &amp; HOLD on the spinning clay — hold steady to open a ring, slide up/down to shape, pull OUT to widen / push IN to narrow. then we print it for real.</p>
   <a href="/customize-vase.html" class="cross-link">// prefer sliders? use the classic vase designer →</a>
 </div>
 
@@ -109,7 +110,8 @@
     <canvas id="clayCanvas"></canvas>
     <div class="dim-display" id="dimDisplay"><span class="v">18.0</span>cm tall · <span class="v">8.0</span>cm wide</div>
     <div class="print-chip" id="printChip">// PRINTABLE ✓</div>
-    <div class="preview-overlay" id="overlay">// press &amp; drag the clay · two fingers (or right-drag) to look around</div>
+    <div class="contact-dot" id="contactDot"></div>
+    <div class="preview-overlay" id="overlay">// press &amp; HOLD on the clay · hold steady to open it · slide up/down to shape · two fingers to look</div>
   </div>
 
   <div class="controls">
@@ -272,50 +274,51 @@ floor.rotation.x=-Math.PI/2; floor.position.y=-0.5; scene.add(floor);
 const gridHelper = new THREE.GridHelper(300, 30, 0x4a3060, 0x2a1840);
 gridHelper.position.y=-0.4; gridHelper.material.opacity=0.35; gridHelper.material.transparent=true; scene.add(gridHelper);
 
-let vaseGroup = null;
+/* ---- persistent meshes: built ONCE, geometry swapped in place every frame ----
+   We sculpt while the wheel spins continuously, so updateMesh() runs up to 60×/s.
+   Reusing the meshes + materials (only swapping geometry) avoids per-frame GC churn. */
+let vaseGroup = null, meshOuter = null, meshInner = null;
+function initMeshes(){
+  meshOuter = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial({ vertexColors:true, side:THREE.FrontSide }));
+  meshInner = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial({ vertexColors:true, side:THREE.BackSide }));
+  vaseGroup = new THREE.Group();
+  vaseGroup.add(meshOuter); vaseGroup.add(meshInner);
+  scene.add(vaseGroup);
+}
 
 /* ---- profile → lathe points (leading (0,0) closes the bottom disc) ---- */
-function profileToPoints(segHint){
+function profileToPoints(){
   const pts = [ new THREE.Vector2(0,0) ];
   for (let i=0;i<N;i++) pts.push(new THREE.Vector2(Math.max(0.0001, profileR[i]), yAt(i)));
   return pts;
 }
 
-/* ---- rebuild mesh: lathe + two-layer hollow (copied from buildVase) ---- */
-function rebuild(){
-  const keepRot = vaseGroup ? vaseGroup.rotation.y : 0;
+/* ---- update mesh geometry in place: lathe + two-layer hollow ---- */
+function updateMesh(){
   const geo = new THREE.LatheGeometry(profileToPoints(), 96);
   const rgb = COLORS[state.colorIdx].rgb;
   const vc = new Float32Array(geo.attributes.position.count*3);
   for (let i=0;i<vc.length;i+=3){ vc[i]=rgb[0]; vc[i+1]=rgb[1]; vc[i+2]=rgb[2]; }
   geo.setAttribute('color', new THREE.BufferAttribute(vc,3));
 
-  const matOuter = new THREE.MeshLambertMaterial({ vertexColors:true, side:THREE.FrontSide });
-  const meshOuter = new THREE.Mesh(geo, matOuter);
-
   const innerGeo = geo.clone();
   const dark = new Float32Array(vc.length);
   for (let i=0;i<vc.length;i++) dark[i] = vc[i]*0.4;
   innerGeo.setAttribute('color', new THREE.BufferAttribute(dark,3));
-  const meshInner = new THREE.Mesh(innerGeo, new THREE.MeshLambertMaterial({ vertexColors:true, side:THREE.BackSide }));
 
   geo.computeBoundingBox();
   const hMM = geo.boundingBox.max.y - geo.boundingBox.min.y, gap=3;
+
+  if (meshOuter.geometry) meshOuter.geometry.dispose();
+  if (meshInner.geometry) meshInner.geometry.dispose();
+  meshOuter.geometry = geo;
+  meshInner.geometry = innerGeo;
   meshInner.scale.set(0.93, Math.max(0.5,(hMM-2*gap)/hMM), 0.93);
   meshInner.position.y = gap;
 
-  if (vaseGroup){
-    scene.remove(vaseGroup);
-    vaseGroup.children.forEach(c => { if(c.geometry)c.geometry.dispose(); if(c.material)c.material.dispose(); });
-    vaseGroup = null;
-  }
-  vaseGroup = new THREE.Group();
-  vaseGroup.add(meshOuter); vaseGroup.add(meshInner);
-  vaseGroup.rotation.y = keepRot;                 // preserve spin angle across rebuilds
-  scene.add(vaseGroup);
-
   updatePrice(); updateDimensions(); checkPrintability();
 }
+const rebuild = updateMesh;   // alias: existing call sites keep working
 
 /* ---- pricing: reuse COST + formula; surface-of-revolution volume integral ---- */
 function estimateVolume(){               // cm³ of wall shell
@@ -393,14 +396,18 @@ function pickFromPointer(clientX, clientY){
 let BRUSH = 14;                 // half-width in samples (slider 6..24)
 const STRENGTH = 0.35;
 function applyBrush(idx, cursorR){
+  let maxDelta = 0;
   for (let i=1;i<N;i++){
     const d = i - idx;
     const w = Math.exp(-(d*d)/(2*BRUSH*BRUSH));
     if (w < 0.01) continue;
+    const before = profileR[i];
     profileR[i] += (cursorR - profileR[i]) * STRENGTH * w;
+    const dd = Math.abs(profileR[i]-before); if (dd>maxDelta) maxDelta=dd;
   }
   laplacian(1, 0.18);           // tiny anti-jaggy pass
   clampProfile();               // global printability + closed-bottom guarantee
+  return maxDelta;              // how much the wall moved this frame (for change-detection)
 }
 function laplacian(passes, lambda){
   for (let p=0;p<passes;p++){
@@ -415,10 +422,10 @@ function laplacian(passes, lambda){
 
 /* ---- spin ---- */
 let spinOn = true, sculpting = false;
-const SPIN_SPEED = 0.025;
+const SPIN_SPEED = 0.06;        // lively potter's-wheel pace (≈1 rev / 1.7s) — keeps spinning while you shape
 
 /* ---- camera orbit (reused math; gated so sculpt-drag never orbits) ---- */
-let camAngleY=Math.PI/4, camAngleX=1.15, camDist=380;
+let camAngleY=Math.PI/5, camAngleX=1.32, camDist=360;   // near-level "sitting at the wheel" view
 function updateCamera(){
   const cy=Math.cos(camAngleX)*camDist, rad=Math.sin(camAngleX)*camDist;
   const focusY = H/2;
@@ -435,6 +442,8 @@ let orbitPrev = null, pinchPrev = 0;
 
 function pushUndo(){ undoStack.push(profileR.slice()); if (undoStack.length>20) undoStack.shift(); }
 function fadeOverlay(){ const o=document.getElementById('overlay'); if(o) o.style.opacity='0'; }
+function showContact(cx,cy){ const d=document.getElementById('contactDot'); const r=canvas.parentElement.getBoundingClientRect(); d.style.left=(cx-r.left)+'px'; d.style.top=(cy-r.top)+'px'; d.style.display='block'; }
+function hideContact(){ document.getElementById('contactDot').style.display='none'; }
 
 function isOrbitGesture(e){
   return (e.pointerType!=='touch' && e.button===2) || mode==='rotate' || pointers.size>=2;
@@ -456,6 +465,7 @@ canvas.addEventListener('pointerdown', e=>{
   sculpting = true;
   if (navigator.vibrate) navigator.vibrate(8);
   pending = {x:e.clientX, y:e.clientY}; dirty = true;
+  showContact(e.clientX, e.clientY);
   e.preventDefault();
 }, {passive:false});
 
@@ -477,14 +487,15 @@ canvas.addEventListener('pointermove', e=>{
     orbitPrev = {x:e.clientX,y:e.clientY}; e.preventDefault(); return;
   }
   if (!sculpting) return;
-  pending = {x:e.clientX, y:e.clientY}; dirty = true;   // stash only — rebuild in rAF
+  pending = {x:e.clientX, y:e.clientY}; dirty = true;   // animate() applies it every frame while held
+  showContact(e.clientX, e.clientY);
   e.preventDefault();
 }, {passive:false});
 
 function endPointer(e){
   pointers.delete(e.pointerId);
   if (pointers.size<2){ pinchPrev = 0; }
-  if (pointers.size===0){ sculpting = false; orbitPrev = null; }
+  if (pointers.size===0){ sculpting = false; orbitPrev = null; hideContact(); }
 }
 canvas.addEventListener('pointerup', endPointer);
 canvas.addEventListener('pointercancel', endPointer);
@@ -494,15 +505,19 @@ canvas.addEventListener('wheel', e=>{ e.preventDefault(); camDist=Math.max(150,M
 function pointersCentroid(){ let x=0,y=0,n=0; pointers.forEach(p=>{x+=p.x;y+=p.y;n++;}); return {x:x/n,y:y/n}; }
 function pinchDist(){ const a=[...pointers.values()]; if(a.length<2)return 0; const dx=a[0].x-a[1].x,dy=a[0].y-a[1].y; return Math.hypot(dx,dy); }
 
-/* ---- core loop ---- */
+/* ---- core loop ----
+   The wheel spins CONTINUOUSLY (even while you sculpt). While the pointer is held down,
+   we apply the brush EVERY frame at the held position — so holding steady opens a ring at
+   that height (like pressing a tool to spinning clay), and you slide up/down to shape, in/out
+   to widen/narrow. No dragging-a-curve. updateMesh only runs when the wall actually moved. */
 function animate(){
   requestAnimationFrame(animate);
-  if (vaseGroup && spinOn && !sculpting) vaseGroup.rotation.y += SPIN_SPEED;
-  if (dirty && pending){
+  if (vaseGroup && spinOn) vaseGroup.rotation.y += SPIN_SPEED;
+  if (sculpting && pending){
     const { idx, cursorR } = pickFromPointer(pending.x, pending.y);
-    applyBrush(idx, cursorR);
-    rebuild();
-    dirty = false;
+    const delta = applyBrush(idx, cursorR);
+    if (delta > 0.03) updateMesh();      // skip rebuild once the ring has formed (perf)
+    else { updatePrice(); checkPrintability(); }
   }
   renderer.render(scene, camera);
 }
@@ -651,9 +666,9 @@ document.getElementById('downloadBtn').addEventListener('click', async ()=>{
 });
 
 /* ---- boot ---- */
-initClay(); resizeRenderer(); rebuild(); buildColorGrid(); updateCamera(); animate();
+initClay(); initMeshes(); resizeRenderer(); updateMesh(); buildColorGrid(); updateCamera(); animate();
 document.getElementById('brushVal').textContent=(BRUSH*(H/(N-1))/10).toFixed(1)+'cm';
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">sculpt v1</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">sculpt v2</div>
 </body>
 </html>
