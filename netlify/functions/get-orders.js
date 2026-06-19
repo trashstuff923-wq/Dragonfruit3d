@@ -26,12 +26,27 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
+  // --- ACCESS CONTROL (added after VibeProd security scan flagged this endpoint) ---
+  // This endpoint returns customer names, emails, revenue and profit margins, so it
+  // MUST NOT be public. Require a secret admin key supplied via the 'x-admin-key' header,
+  // matched against the ADMIN_KEY environment variable set in the Netlify dashboard.
+  // The key is NEVER stored in the code or the repo. If ADMIN_KEY isn't configured, deny.
+  const adminKey = process.env.ADMIN_KEY;
+  const provided = event.headers['x-admin-key'] || event.headers['X-Admin-Key'];
+  if (!adminKey) {
+    return { statusCode: 503, body: JSON.stringify({ error: 'Admin access not configured. Set ADMIN_KEY in Netlify environment variables.' }) };
+  }
+  if (!provided || provided !== adminKey) {
+    return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
+  }
+
   try {
     const sessions = await stripe.checkout.sessions.list({ limit: 100, status: 'complete' });
 
     const orders = sessions.data.map(session => {
       let items = [];
-      try { items = JSON.parse(session.metadata?.order_items || '[]'); } catch (e) {}
+      try { items = JSON.parse(session.metadata?.order_items || '[]'); }
+      catch (e) { console.warn('Could not parse order_items for session', session.id, e.message); }
 
       const revenue = session.amount_total / 100;
       const productNames = items.length > 0
@@ -53,7 +68,8 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+      // Locked to the site's own origin instead of '*' so other sites can't read order data.
+      headers: { 'Access-Control-Allow-Origin': 'https://dragonfruit3d.com', 'Content-Type': 'application/json' },
       body: JSON.stringify({ orders })
     };
 

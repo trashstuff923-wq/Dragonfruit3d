@@ -143,39 +143,59 @@
 </div>
 
 <script>
-    const PASSWORD = 'fruit3d';
+    // The password is no longer checked here in the browser (that was insecure — visible in
+    // page source). It's now sent to the server, which checks it against the ADMIN_KEY env var.
+    // We hold the typed key only in memory for this session to authorize data fetches.
+    let ADMIN_KEY = '';
     const COLORS = ['#00d4ff','#FF006E','#00ff9d','#9D4EDD','#FFD700','#FF8C00'];
 
-    function login() {
-        if (document.getElementById('pw').value === PASSWORD) {
+    async function login() {
+        const typed = document.getElementById('pw').value;
+        document.getElementById('errMsg').style.display = 'none';
+        // Verify the key with the server by attempting to load orders.
+        ADMIN_KEY = typed;
+        const ok = await loadOrders(true);
+        if (ok) {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('statsPanel').style.display = 'block';
-            loadOrders();
             loadTPU();
         } else {
+            ADMIN_KEY = '';
             document.getElementById('errMsg').style.display = 'block';
         }
     }
     function logout() {
+        ADMIN_KEY = '';
         document.getElementById('loginScreen').style.display = 'flex';
         document.getElementById('statsPanel').style.display = 'none';
         document.getElementById('pw').value = '';
     }
 
-    async function loadOrders() {
-        document.getElementById('ordersContainer').innerHTML = '<div class="loading">Fetching from Stripe...</div>';
-        document.getElementById('revenueChart').innerHTML = '<div class="loading">Loading...</div>';
+    // Returns true on success, false on auth failure. When isLogin is true we stay quiet about
+    // non-auth errors so the login screen can show a generic "wrong password".
+    async function loadOrders(isLogin) {
+        if (!isLogin) {
+            document.getElementById('ordersContainer').innerHTML = '<div class="loading">Fetching from Stripe...</div>';
+            document.getElementById('revenueChart').innerHTML = '<div class="loading">Loading...</div>';
+        }
         try {
-            const res = await fetch('/.netlify/functions/get-orders');
+            const res = await fetch('/.netlify/functions/get-orders', {
+                headers: { 'x-admin-key': ADMIN_KEY }
+            });
+            if (res.status === 401) return false;       // wrong key
             if (!res.ok) throw new Error('Function returned ' + res.status);
             const { orders } = await res.json();
             document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-SG');
             renderStats(orders);
             renderTable(orders);
             renderChart(orders);
+            return true;
         } catch (err) {
-            document.getElementById('ordersContainer').innerHTML = `<div class="loading" style="color:var(--primary)">⚠️ Could not load: ${err.message}</div>`;
-            document.getElementById('revenueChart').innerHTML = '';
+            if (!isLogin) {
+                document.getElementById('ordersContainer').innerHTML = `<div class="loading" style="color:var(--primary)">⚠️ Could not load: ${err.message}</div>`;
+                document.getElementById('revenueChart').innerHTML = '';
+            }
+            return false;
         }
     }
 
