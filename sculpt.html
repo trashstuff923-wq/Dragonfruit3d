@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dragonfruit 3D Pottery Wheel · v2 (Jun 19) · REAL wheel feel: continuous spin + press-and-HOLD shaping (hold steady opens a ring) instead of drag-a-curve. -->
+<!-- Dragonfruit 3D Pottery Wheel · v3 (Jun 19) · visible spinning wheel head + direct grab-and-pull (clay sticks to finger) + head-on silhouette view. Closer to Google 3D Pottery. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -101,7 +101,7 @@
 
 <div class="header">
   <h1>THROW ON THE WHEEL</h1>
-  <p>// press &amp; HOLD on the spinning clay — hold steady to open a ring, slide up/down to shape, pull OUT to widen / push IN to narrow. then we print it for real.</p>
+  <p>// grab the spinning clay and pull — drag the wall OUT to widen, IN to narrow, up/down to shape the whole pot. then we print it for real.</p>
   <a href="/customize-vase.html" class="cross-link">// prefer sliders? use the classic vase designer →</a>
 </div>
 
@@ -111,7 +111,7 @@
     <div class="dim-display" id="dimDisplay"><span class="v">18.0</span>cm tall · <span class="v">8.0</span>cm wide</div>
     <div class="print-chip" id="printChip">// PRINTABLE ✓</div>
     <div class="contact-dot" id="contactDot"></div>
-    <div class="preview-overlay" id="overlay">// press &amp; HOLD on the clay · hold steady to open it · slide up/down to shape · two fingers to look</div>
+    <div class="preview-overlay" id="overlay">// grab the clay &amp; pull it in/out · drag up/down to shape · two fingers to look around</div>
   </div>
 
   <div class="controls">
@@ -131,7 +131,7 @@
     <div class="ctrl-section">
       <div class="slider-row">
         <div class="slider-head"><span class="name">Brush size</span><span class="val" id="brushVal">2.1cm</span></div>
-        <input type="range" id="brushSlider" min="6" max="24" step="1" value="14">
+        <input type="range" id="brushSlider" min="6" max="24" step="1" value="10">
       </div>
       <div class="slider-row">
         <div class="slider-head"><span class="name">Height</span><span class="val" id="heightVal">18.0cm</span></div>
@@ -277,11 +277,31 @@ gridHelper.position.y=-0.4; gridHelper.material.opacity=0.35; gridHelper.materia
 /* ---- persistent meshes: built ONCE, geometry swapped in place every frame ----
    We sculpt while the wheel spins continuously, so updateMesh() runs up to 60×/s.
    Reusing the meshes + materials (only swapping geometry) avoids per-frame GC churn. */
+// A visibly-spinning potter's wheel HEAD — this is the key "it's on a wheel" cue. A surface of
+// revolution looks identical as it spins, so without this the clay appears static. The alternating
+// wedges + rings make the rotation obvious.
+function makeWheelHead(){
+  const c=document.createElement('canvas'); c.width=c.height=256; const x=c.getContext('2d');
+  x.fillStyle='#241038'; x.beginPath(); x.arc(128,128,128,0,7); x.fill();
+  x.save(); x.translate(128,128);
+  for(let k=0;k<16;k++){ x.rotate(Math.PI*2/16); x.fillStyle = k%2?'#3a2456':'#1c0e30'; x.beginPath(); x.moveTo(0,0); x.arc(0,0,128,-Math.PI/16,Math.PI/16); x.closePath(); x.fill(); }
+  x.restore();
+  x.strokeStyle='rgba(0,212,255,.4)'; x.lineWidth=4;
+  x.beginPath(); x.arc(128,128,118,0,7); x.stroke();
+  x.beginPath(); x.arc(128,128,72,0,7); x.stroke();
+  x.fillStyle='#ff0096'; x.beginPath(); x.arc(128,128,8,0,7); x.fill();   // hot-pink hub
+  const tex=new THREE.CanvasTexture(c);
+  const disc=new THREE.Mesh(new THREE.CircleGeometry(150,64), new THREE.MeshBasicMaterial({map:tex,transparent:true}));
+  disc.rotation.x=-Math.PI/2; disc.position.y=-0.5;
+  return disc;
+}
+
 let vaseGroup = null, meshOuter = null, meshInner = null;
 function initMeshes(){
   meshOuter = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial({ vertexColors:true, side:THREE.FrontSide }));
   meshInner = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial({ vertexColors:true, side:THREE.BackSide }));
   vaseGroup = new THREE.Group();
+  vaseGroup.add(makeWheelHead());                 // spins with the clay → visible rotation
   vaseGroup.add(meshOuter); vaseGroup.add(meshInner);
   scene.add(vaseGroup);
 }
@@ -393,8 +413,8 @@ function pickFromPointer(clientX, clientY){
 }
 
 /* ---- brush: Gaussian ease toward cursor radius, then global clamp ---- */
-let BRUSH = 14;                 // half-width in samples (slider 6..24)
-const STRENGTH = 0.35;
+let BRUSH = 10;                 // half-width in samples (slider 6..24)
+const TRACK = 0.6;              // how directly the wall follows the cursor (1 = instant). High = clay sticks to finger.
 function applyBrush(idx, cursorR){
   let maxDelta = 0;
   for (let i=1;i<N;i++){
@@ -402,10 +422,11 @@ function applyBrush(idx, cursorR){
     const w = Math.exp(-(d*d)/(2*BRUSH*BRUSH));
     if (w < 0.01) continue;
     const before = profileR[i];
-    profileR[i] += (cursorR - profileR[i]) * STRENGTH * w;
+    // DIRECT grab-and-pull: the edge tracks the cursor (no mushy easing). Brush weight spreads it.
+    profileR[i] = before + (cursorR - before) * (TRACK * w);
     const dd = Math.abs(profileR[i]-before); if (dd>maxDelta) maxDelta=dd;
   }
-  laplacian(1, 0.18);           // tiny anti-jaggy pass
+  laplacian(1, 0.12);           // light anti-jaggy pass
   clampProfile();               // global printability + closed-bottom guarantee
   return maxDelta;              // how much the wall moved this frame (for change-detection)
 }
@@ -422,10 +443,10 @@ function laplacian(passes, lambda){
 
 /* ---- spin ---- */
 let spinOn = true, sculpting = false;
-const SPIN_SPEED = 0.06;        // lively potter's-wheel pace (≈1 rev / 1.7s) — keeps spinning while you shape
+const SPIN_SPEED = 0.05;        // potter's-wheel pace — keeps spinning while you shape (visible via the wheel head)
 
 /* ---- camera orbit (reused math; gated so sculpt-drag never orbits) ---- */
-let camAngleY=Math.PI/5, camAngleX=1.32, camDist=360;   // near-level "sitting at the wheel" view
+let camAngleY=0, camAngleX=1.26, camDist=360;   // head-on, slightly above — see the silhouette AND the spinning wheel head
 function updateCamera(){
   const cy=Math.cos(camAngleX)*camDist, rad=Math.sin(camAngleX)*camDist;
   const focusY = H/2;
@@ -669,6 +690,6 @@ document.getElementById('downloadBtn').addEventListener('click', async ()=>{
 initClay(); initMeshes(); resizeRenderer(); updateMesh(); buildColorGrid(); updateCamera(); animate();
 document.getElementById('brushVal').textContent=(BRUSH*(H/(N-1))/10).toFixed(1)+'cm';
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">sculpt v2</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">sculpt v3</div>
 </body>
 </html>
