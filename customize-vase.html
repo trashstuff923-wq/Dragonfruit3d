@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dragonfruit 3D Vase Customizer · v37 (May 26) · SHIP: 3MF is geometry-only (loads in Bambu, manual color paint workflow). Bambu paint_color encoding deferred. -->
+<!-- Dragonfruit 3D Vase Customizer · v39 (Jun 21) · Multi-color 3MF via <m:colorgroup> (Variant B — loads with color in Bambu). Fixed sawtooth "razor" band edges (color bands by face min-Y so both triangles of a lathe quad match). 3MF still geometry-only. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -503,7 +503,12 @@ function applyColorPattern(geometry) {
       c = COLORS[state.colorIdx].rgb;
     } else if (state.pattern === 'bands') {
       const S = Math.max(2, state.sections|0);
-      const bandIdx = Math.min(S - 1, Math.floor(t * S));
+      // Use the face's MIN y (its bottom edge) — both triangles of a lathe quad share the same
+      // bottom row, so they get the SAME band. Centroid y differs per triangle → diagonal "sawtooth"
+      // band edges (the razor glitch). Min-y snaps each boundary to a clean horizontal mesh row.
+      const fy = Math.min(y0, y1, y2);
+      const tb = yRange > 0 ? (fy - minY) / yRange : 0;
+      const bandIdx = Math.min(S - 1, Math.floor(tb * S));
       c = activeColors[bandIdx % N];
     } else if (state.pattern === 'stripes') {
       const S = Math.max(2, state.sections|0);
@@ -1108,28 +1113,29 @@ function build3MFModel(geometry, palette){
       if (Math.abs(c[0]-r)<tol && Math.abs(c[1]-g)<tol && Math.abs(c[2]-b)<tol) { matchIdx = i; found = true; break; }
     }
     if (!found) unmatched++;
-    // v37 SHIP MODE: paint_color caused Bambu Studio crashes regardless of encoding/namespace.
-    // Until we get the proprietary RLE encoding right, ship geometry-only — vase opens cleanly
-    // in Bambu Studio, user paints colors manually with the bucket tool (~3 min per vase) using
-    // the order spec from Netlify as a reference. The form submission still carries spec details.
-    void(matchIdx);
-    triLines[f] = '     <triangle v1="'+v0+'" v2="'+(v0+1)+'" v3="'+(v0+2)+'"/>';
+    // v38: COLOR via the official 3MF material extension <m:colorgroup> (id=2). Each face references
+    // its palette slot through pid/p1 — this is what loaded with color in Bambu Studio (Variant B test),
+    // unlike the proprietary paint_color RLE that used to crash. matchIdx = the color slot for this face.
+    triLines[f] = '     <triangle v1="'+v0+'" v2="'+(v0+1)+'" v3="'+(v0+2)+'" pid="2" p1="'+matchIdx+'"/>';
   }
   if (unmatched > 0) console.warn('[3MF] '+unmatched+' face(s) had unmatched colors → mapped to palette[0]');
 
-  // Bambu Studio 3MF format — uses production extension + their own BambuStudio namespace.
-  // paint_color attribute on triangles drives AMS color assignment.
-  // Minimal Bambu-flavored 3MF: core 3MF namespace + BambuStudio namespace for paint_color.
-  // No production extension (we put mesh inline, not via /3D/Objects/*.model components).
-  // Build item has no transform → Bambu auto-centers the object on the plate.
-  // Pure core 3MF, no BambuStudio namespace at all. If this loads cleanly we'll know all
-  // the Bambu-specific bits were the crash source and can add them back one at a time.
+  // COLOR via the official 3MF material extension: a <m:colorgroup> (id=2) lists each palette color;
+  // every triangle references its slot through pid="2" p1="<idx>". This is the encoding that loaded
+  // WITH COLOR in Bambu Studio (Variant B), so it's what we ship. On import Bambu maps each color
+  // to an AMS slot. (The old proprietary paint_color RLE crashed Bambu — gone now.)
+  const colorGroup =
+    '  <m:colorgroup id="2">\n' +
+    palette.map(p => '   <m:color color="'+_rgb01ToHex(p.rgb)+'"/>').join('\n') + '\n' +
+    '  </m:colorgroup>\n';
   return '<?xml version="1.0" encoding="UTF-8"?>\n' +
     '<model unit="millimeter" xml:lang="en-US"\n' +
-    '       xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">\n' +
+    '       xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"\n' +
+    '       xmlns:m="http://schemas.microsoft.com/3dmanufacturing/material/2015/02">\n' +
     ' <metadata name="Application">DragonfruitVaseCustomizer</metadata>\n' +
     ' <resources>\n' +
-    '  <object id="1" type="model">\n' +
+    colorGroup +
+    '  <object id="1" type="model" pid="2" pindex="0">\n' +
     '   <mesh>\n' +
     '    <vertices>\n' +
     vertLines.join('\n') + '\n' +
@@ -1231,6 +1237,6 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
 
 buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera(); animate();
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v37</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v39</div>
 </body>
 </html>

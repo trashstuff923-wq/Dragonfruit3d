@@ -263,7 +263,8 @@
             background-clip: text;
             letter-spacing: 1px;
             white-space: nowrap;
-            overflow: visible;
+            overflow: hidden;
+            min-width: 0;     /* allow the logo to shrink so it can't shove the cart off-screen */
         }
 
         .nav-links {
@@ -1691,6 +1692,7 @@
             display: flex;
             align-items: center;
             gap: 1rem;
+            flex-shrink: 0;   /* never let the cart 🛒 get squeezed off narrow phones */
         }
 
         .account-btn {
@@ -2159,6 +2161,12 @@
             .logo {
                 font-size: 1.2rem;
                 letter-spacing: 0.5px;
+            }
+            /* The logo text is an inline-styled span (font-size:1.8rem) — must override with !important
+               or it stays huge on phones and pushes the 🛒 cart off the right edge. */
+            .logo span {
+                font-size: 1.05rem !important;
+                letter-spacing: 0.5px !important;
             }
 
             /* Even more compact on very small screens */

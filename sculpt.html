@@ -23,7 +23,7 @@
   .header p{color:var(--text-dim);font-size:.9rem;max-width:600px;margin:0 auto}
   .studio{max-width:1400px;margin:0 auto 60px;padding:0 20px;display:grid;grid-template-columns:1fr 400px;gap:24px}
   @media (max-width:900px){.studio{grid-template-columns:1fr}}
-  .preview{background:linear-gradient(180deg,var(--card),var(--darker));border:1px solid rgba(255,0,150,.2);border-radius:12px;min-height:600px;position:relative;overflow:hidden}
+  .preview{background:radial-gradient(circle at 50% 36%, #f6efe6 0%, #ece1d4 64%, #e1d3c2 100%);border:1px solid rgba(255,0,150,.18);border-radius:12px;min-height:600px;position:relative;overflow:hidden}
   #clayCanvas{display:block;width:100%!important;height:600px!important;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:grab}
   #clayCanvas:active{cursor:grabbing}
   .preview-overlay{position:absolute;bottom:14px;left:14px;color:var(--text-dim);font-size:.75rem;letter-spacing:1px;background:rgba(0,0,0,.5);padding:6px 10px;border-radius:4px;pointer-events:none;transition:opacity .5s}
@@ -31,6 +31,15 @@
   .dim-display .v{color:#fff;font-weight:700}
   .print-chip{position:absolute;top:54px;right:14px;background:rgba(0,0,0,.6);border:1px solid rgba(0,212,255,.4);padding:5px 10px;border-radius:6px;font-family:'Space Mono',monospace;font-size:.72rem;color:var(--accent);letter-spacing:1px;pointer-events:none}
   .contact-dot{position:absolute;width:26px;height:26px;border-radius:50%;border:2px solid var(--accent);background:rgba(0,212,255,.22);box-shadow:0 0 18px var(--accent);pointer-events:none;transform:translate(-50%,-50%);display:none;z-index:6}
+  /* Google-style step bar + tooltip on the light studio */
+  .stepper{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.82);border:1px solid rgba(120,90,60,.2);border-radius:999px;padding:7px 16px;box-shadow:0 4px 16px rgba(80,50,30,.12);z-index:7}
+  .stepper .step{display:flex;align-items:center;gap:7px;font-family:'Space Mono',monospace;font-size:.78rem;color:#9a8772;letter-spacing:.3px;white-space:nowrap}
+  .stepper .step .num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#dccfbd;color:#8a7560;font-size:.72rem;font-weight:700}
+  .stepper .step.active{color:#7a4a28}
+  .stepper .step.active .num{background:#c2703c;color:#fff}
+  .stepper .step.done .num{background:#7a4a28;color:#fff}
+  .stepper .step-sep{width:22px;height:2px;background:rgba(120,90,60,.25);border-radius:2px}
+  .tooltip-bubble{position:absolute;top:18px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.92);border:1px solid rgba(120,90,60,.2);border-radius:10px;padding:8px 14px;font-family:'Space Mono',monospace;font-size:.8rem;color:#7a5a3c;box-shadow:0 4px 14px rgba(80,50,30,.12);z-index:7;pointer-events:none;transition:opacity .3s}
   .controls{background:var(--card);border:1px solid rgba(255,0,150,.2);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:18px;max-height:80vh;overflow-y:auto}
   .controls::-webkit-scrollbar{width:6px}
   .controls::-webkit-scrollbar-thumb{background:var(--primary);border-radius:3px}
@@ -66,6 +75,16 @@
   .tool-btn{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);color:var(--text);padding:11px 6px;border-radius:6px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:1px;transition:all .15s}
   .tool-btn:hover{border-color:var(--accent);color:var(--accent)}
   .tool-btn.on{background:rgba(0,212,255,.12);border-color:var(--accent);color:var(--accent)}
+  .fire-btn{width:100%;background:linear-gradient(135deg,#ff6a00,#ff2d2d);color:#fff;border:none;padding:13px;border-radius:8px;font-family:'Orbitron',sans-serif;font-weight:900;font-size:.82rem;letter-spacing:1.2px;cursor:pointer;transition:transform .1s,box-shadow .2s,filter .2s;box-shadow:0 0 16px rgba(255,90,0,.35)}
+  .fire-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 0 26px rgba(255,90,0,.6)}
+  .fire-btn:disabled{filter:grayscale(.7) brightness(.6);cursor:not-allowed;box-shadow:none}
+  .fire-btn.firing{animation:firePulse .5s ease-in-out infinite}
+  @keyframes firePulse{0%,100%{box-shadow:0 0 18px rgba(255,90,0,.5)}50%{box-shadow:0 0 32px rgba(255,160,0,.9)}}
+  /* kiln heat flash over the preview */
+  .kiln-flash{position:absolute;inset:0;border-radius:12px;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(circle at 50% 60%, rgba(255,120,20,.0) 30%, rgba(120,20,0,.0) 100%);z-index:5}
+  .fired-banner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);background:rgba(20,8,0,.82);border:1px solid #ff8a3d;color:#ffd9b0;padding:14px 22px;border-radius:12px;font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px;text-align:center;opacity:0;transition:opacity .4s,transform .4s;z-index:8;pointer-events:none;box-shadow:0 0 30px rgba(255,90,0,.4)}
+  .fired-banner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  .fired-banner small{display:block;font-family:'Space Mono',monospace;font-weight:400;font-size:.72rem;color:#e0b48a;margin-top:5px;letter-spacing:.3px}
   .cross-link{display:inline-block;margin-top:6px;color:var(--accent);font-size:.78rem;text-decoration:none;letter-spacing:.5px}
   .cross-link:hover{text-decoration:underline}
   .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:20px}
@@ -101,7 +120,7 @@
 
 <div class="header">
   <h1>THROW ON THE WHEEL</h1>
-  <p>// press &amp; HOLD on the clay to push it IN — press just OUTSIDE the edge to pull it OUT. hold longer = more. then we print it for real.</p>
+  <p>// throw a real pot of clay on the wheel — open it up, then press the walls to shape it. then we print it for real.</p>
   <a href="/customize-vase.html" class="cross-link">// prefer sliders? use the classic vase designer →</a>
 </div>
 
@@ -111,7 +130,17 @@
     <div class="dim-display" id="dimDisplay"><span class="v">18.0</span>cm tall · <span class="v">8.0</span>cm wide</div>
     <div class="print-chip" id="printChip">// PRINTABLE ✓</div>
     <div class="contact-dot" id="contactDot"></div>
-    <div class="preview-overlay" id="overlay">// press &amp; hold to push IN · press just outside the edge to pull OUT · two fingers to look around</div>
+    <div class="stepper" id="stepper">
+      <div class="step active" id="step-hole"><span class="num">1</span> Create a hole</div>
+      <div class="step-sep"></div>
+      <div class="step" id="step-sculpt"><span class="num">2</span> Shape it</div>
+      <div class="step-sep"></div>
+      <div class="step" id="step-fire"><span class="num">3</span> Fire it</div>
+    </div>
+    <div class="tooltip-bubble" id="tooltip">Press &amp; hold on the clay to open a hole</div>
+    <div class="preview-overlay" id="overlay">// drag empty space (or two-finger / right-drag) to look around</div>
+    <div class="kiln-flash" id="kilnFlash"></div>
+    <div class="fired-banner" id="firedBanner">✨ FIRED!<small>your pot is ready — order it below</small></div>
   </div>
 
   <div class="controls">
@@ -126,6 +155,7 @@
         <button class="tool-btn on" id="spinBtn">SPIN: ON</button>
         <button class="tool-btn" id="rotateBtn">ROTATE VIEW</button>
       </div>
+      <button class="fire-btn" id="fireBtn" style="margin-top:10px" disabled>🔥 FIRE IT IN THE KILN</button>
     </div>
 
     <div class="ctrl-section">
@@ -216,13 +246,14 @@ const COLORS = [
   {name:'Ice Blue',hex:'#ADD8E6',rgb:[0.678,0.847,0.902],surcharge:1},
   {name:'Glow',hex:'#00FFFF',rgb:[0.0,1.0,1.0],surcharge:3},
   {name:'Gradient',hex:'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',rgb:[0.61,0.39,0.74],surcharge:4,isGradient:true},
+  {name:'Terracotta',hex:'#b5764a',rgb:[0.71,0.46,0.29],surcharge:0},   // real clay tone — default sculpt look (matches Google)
 ];
 const COST = {
   filamentPerGram: 0.05, printRateGramsPerHr: 15, machineHourly: 2,
   brimGrams: 2, failureRate: 0.05, markup: 1.4, setupFee: 3, minOrder: 12,
 };
 // minimal state for reuse (single-color sculpt)
-const state = { colorIdx: 8, estimatedGrams: 0, estimatedHours: 0 };  // default Brown — looks like real clay on load
+const state = { colorIdx: 12, estimatedGrams: 0, estimatedHours: 0 };  // default Terracotta — real clay look on load
 
 // ---- data model: the vase profile ----
 const N = 120;                          // profile samples, base → top
@@ -231,14 +262,61 @@ const profileR = new Float32Array(N);   // radius mm at each band — THE source
 function yAt(i){ return (i/(N-1)) * H; }
 
 const MIN_R = 1.5, MAX_R = 110, H_MAX = 250, DRDY_MAX = 1.0, BASE_RAMP = 6;
+const WALL = 5;                 // mm visual wall thickness (cavity = outer − WALL)
+// Cavity model (Google "create a hole"): the clay starts as a SOLID mound (cavityFloor = N-1, no
+// cavity). Pressing the top in the "hole" step lowers cavityFloor → the cavity deepens down into the
+// body, opening it into a vessel. cavityFloor is an index; lower = deeper hole.
+let cavityFloor = N - 1;
+let sculptStep = 'hole';        // 'hole' (create the opening) → 'sculpt' (shape the walls)
 
 function initClay(){
+  // a SOLID round blob of clay on the wheel — short & fat so it reads as a lump, not a pot.
+  // (Printable: base rises from 0 at ≤45°, so the widest point sits a bit above the base.)
+  H = 120;
   for (let i=0;i<N;i++){
     const t = i/(N-1);
-    profileR[i] = 18 + 22*Math.sin(t*Math.PI*0.92);   // base ~4mm, belly ~40mm, slight close at top
+    profileR[i] = 52 * Math.pow(Math.sin(t*Math.PI), 0.5);   // fat near-spherical blob, closes at top
+  }
+  cavityFloor = N - 1;          // solid — no hole yet
+  sculptStep = 'hole';
+  clampProfile();
+  // keep the Height slider in sync with the lump
+  const hs=document.getElementById('heightSlider'), hv=document.getElementById('heightVal');
+  if (hs) hs.value = H; if (hv) hv.textContent = (H/10).toFixed(1)+'cm';
+}
+function innerRadius(i){ return Math.max(1.5, profileR[i] - WALL); }
+
+// CREATE-A-HOLE: called while holding in the 'hole' step. Deepens the cavity down into the body and
+// flares the mouth open — turning the solid lump into an open vessel, just like Google's first step.
+const HOLE_DEEPEN = 1.8;        // bands of cavity deepening per frame (opens in ~1s of holding)
+const RIM_TARGET = 30;          // mm — how wide the mouth flares
+function openHolePress(){
+  // 1) deepen the cavity (lower the floor), leaving ~15mm of solid base
+  const floorMin = Math.round((15 / H) * (N - 1));
+  cavityFloor = Math.max(floorMin, cavityFloor - HOLE_DEEPEN);
+  // 2) flare the mouth open: ease the top ~25 bands of the OUTER wall toward the rim width (smooth,
+  //    stays under the 45° print limit so it's always printable)
+  for (let i = N-26; i < N; i++){
+    if (i < 1) continue;
+    const w = (i - (N-26)) / 25;             // 0 at start of mouth zone → 1 at rim
+    profileR[i] += (RIM_TARGET - profileR[i]) * 0.11 * w;
   }
   clampProfile();
+  smoothMouth();                             // round the rim cleanly — no knife-edge horns
 }
+// Rounds the top of the pot into a clean mouth with NO outward lip (the old flare made horns).
+// Inward narrowing at the rim is fully printable (it's like the top of a sphere, not an overhang).
+function smoothMouth(){
+  const zone = 16;
+  for (let p=0; p<2; p++){
+    const src = profileR.slice();
+    for (let i=N-zone; i<N-1; i++) profileR[i] = src[i] + ((src[i-1]+src[i+1])*0.5 - src[i]) * 0.4;
+  }
+  // no outward lip: the top 8 bands may not widen going up (this is what kills the knife horns)
+  for (let i=N-8; i<N; i++){ if (i<1) continue; if (profileR[i] > profileR[i-1]) profileR[i] = profileR[i-1]; }
+  profileR[N-1] = Math.min(profileR[N-1], profileR[N-2]*0.92);   // round the very rim in slightly
+}
+function holeIsOpen(){ return cavityFloor < N * 0.6; }   // a real vessel, not a shallow dimple
 
 // Closed-bottom + global printability guarantee, bottom-up. Called after EVERY mutation.
 // Clamps each band to [MIN_R, MAX_R] and limits OUTWARD slope vs the band below to 45° (DRDY_MAX),
@@ -247,13 +325,18 @@ function initClay(){
 function clampProfile(){
   profileR[0] = 0;
   const dy = H/(N-1);
+  // FLAT FOOT: the bottom FOOT_H mm may widen steeply (a flat base disc prints fine in vase mode —
+  // it's the first layer, not an overhang). Above the foot we enforce the 45° outward limit so the
+  // WALLS never overhang. This stops the old ice-cream-cone spike and lets the pot sit flat.
+  const FOOT_H = 9;                                    // mm of flat-ish base
+  const footBands = Math.max(2, Math.round(FOOT_H/dy));
   for (let i=1;i<N;i++){
     let r = Math.min(MAX_R, Math.max(MIN_R, profileR[i]));
-    const maxOut = profileR[i-1] + DRDY_MAX*dy;       // 45° outward limit vs band below
+    const rate = (i <= footBands) ? 9.0 : DRDY_MAX;   // steep foot, then 45° body
+    const maxOut = profileR[i-1] + rate*dy;
     if (r > maxOut) r = maxOut;
     profileR[i] = r;
   }
-  if (profileR[1] > BASE_RAMP) profileR[1] = BASE_RAMP; // gentle lift off the axis
 }
 
 /* ---- Three.js scene (copied 1:1 from customize-vase.html) ---- */
@@ -262,19 +345,26 @@ const scene = new THREE.Scene(); scene.background = null;
 const camera = new THREE.PerspectiveCamera(40,1,.1,2000);
 const renderer = new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));   // cap at 2 — save fill-rate on 3x phones
+const MAX_ANISO = renderer.capabilities.getMaxAnisotropy();      // crisp ground/wheel textures at grazing angles
 function resizeRenderer(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
 window.addEventListener('resize',resizeRenderer);
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0x403030, 0.85));
-const keyLight = new THREE.DirectionalLight(0xffffff, 0.7);    // soft clay highlight that reveals the throwing rings
-keyLight.position.set(90, 220, 140); scene.add(keyLight);
-const fillLight = new THREE.DirectionalLight(0xfff0e6, 0.25);
-fillLight.position.set(-120, 60, -40); scene.add(fillLight);
+// Bright, warm studio lighting for the cream Google look — clay reads as soft terracotta.
+scene.add(new THREE.HemisphereLight(0xfff2e2, 0xbfaf88, 0.62));
+const keyLight = new THREE.DirectionalLight(0xfff4e8, 0.62);   // soft key — highlight reveals the throwing rings
+keyLight.position.set(80, 230, 150); scene.add(keyLight);
+const fillLight = new THREE.DirectionalLight(0xffe9d6, 0.22);
+fillLight.position.set(-130, 70, -30); scene.add(fillLight);
 
-const floor=new THREE.Mesh(new THREE.CircleGeometry(180,64),new THREE.MeshBasicMaterial({color:0x1a0a2e,transparent:true,opacity:.35}));
-floor.rotation.x=-Math.PI/2; floor.position.y=-0.5; scene.add(floor);
-const gridHelper = new THREE.GridHelper(300, 30, 0x4a3060, 0x2a1840);
-gridHelper.position.y=-0.4; gridHelper.material.opacity=0.35; gridHelper.material.transparent=true; scene.add(gridHelper);
+// Soft drop shadow on the cream ground (radial dark blur) — replaces the dark grid/floor.
+function makeShadowTex(){
+  const c=document.createElement('canvas'); c.width=c.height=128; const x=c.getContext('2d');
+  const g=x.createRadialGradient(64,64,4,64,64,62);
+  g.addColorStop(0,'rgba(70,48,34,0.30)'); g.addColorStop(0.7,'rgba(70,48,34,0.10)'); g.addColorStop(1,'rgba(70,48,34,0)');
+  x.fillStyle=g; x.fillRect(0,0,128,128); return new THREE.CanvasTexture(c);
+}
+const shadow=new THREE.Mesh(new THREE.CircleGeometry(85,64), new THREE.MeshBasicMaterial({map:makeShadowTex(),transparent:true,depthWrite:false}));
+shadow.rotation.x=-Math.PI/2; shadow.position.y=-0.46; scene.add(shadow);
 
 /* ---- persistent meshes: built ONCE, geometry swapped in place every frame ----
    We sculpt while the wheel spins continuously, so updateMesh() runs up to 60×/s.
@@ -283,18 +373,14 @@ gridHelper.position.y=-0.4; gridHelper.material.opacity=0.35; gridHelper.materia
 // revolution looks identical as it spins, so without this the clay appears static. The alternating
 // wedges + rings make the rotation obvious.
 function makeWheelHead(){
-  const c=document.createElement('canvas'); c.width=c.height=256; const x=c.getContext('2d');
-  x.fillStyle='#1a0e26'; x.beginPath(); x.arc(128,128,128,0,7); x.fill();
-  x.save(); x.translate(128,128);
-  for(let k=0;k<16;k++){ x.rotate(Math.PI*2/16); x.fillStyle = k%2?'#241634':'#160a22'; x.beginPath(); x.moveTo(0,0); x.arc(0,0,128,-Math.PI/16,Math.PI/16); x.closePath(); x.fill(); }
-  x.restore();
-  x.strokeStyle='rgba(0,212,255,.22)'; x.lineWidth=3;
-  x.beginPath(); x.arc(128,128,118,0,7); x.stroke();
-  x.beginPath(); x.arc(128,128,72,0,7); x.stroke();
-  x.fillStyle='rgba(255,0,150,.7)'; x.beginPath(); x.arc(128,128,7,0,7); x.fill();   // subtle hub
-  const tex=new THREE.CanvasTexture(c);
-  const disc=new THREE.Mesh(new THREE.CircleGeometry(155,64), new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:0.7}));
-  disc.rotation.x=-Math.PI/2; disc.position.y=-0.6;
+  const S=512; const c=document.createElement('canvas'); c.width=c.height=S; const x=c.getContext('2d');
+  // Clean warm-grey potter's-wheel head — a smooth gradient disc, NO ring/radial strokes (fine lines
+  // alias into glitchy broken spokes at this grazing camera angle). High-res + anisotropy keeps it crisp.
+  const m=S/2; const g=x.createRadialGradient(m,m*0.92,8,m,m,m); g.addColorStop(0,'#cabca8'); g.addColorStop(0.8,'#ad9b82'); g.addColorStop(1,'#9a8970');
+  x.fillStyle=g; x.beginPath(); x.arc(m,m,m-2,0,7); x.fill();
+  const tex=new THREE.CanvasTexture(c); tex.anisotropy=MAX_ANISO;
+  const disc=new THREE.Mesh(new THREE.CircleGeometry(92,96), new THREE.MeshBasicMaterial({map:tex,transparent:true}));
+  disc.rotation.x=-Math.PI/2; disc.position.y=-0.5;
   return disc;
 }
 
@@ -317,7 +403,7 @@ let vaseGroup = null, meshOuter = null, meshInner = null;
 function initMeshes(){
   const rings = makeClayRings();
   // Soft matte clay: MeshPhong with a faint sheen + the ring bump. color set per-swatch in updateMesh.
-  meshOuter = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshPhongMaterial({ color:0xffffff, side:THREE.FrontSide, shininess:5, specular:0x141008, bumpMap:rings, bumpScale:0.55 }));
+  meshOuter = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshPhongMaterial({ color:0xffffff, side:THREE.DoubleSide, shininess:5, specular:0x141008, bumpMap:rings, bumpScale:0.55 }));
   meshInner = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshPhongMaterial({ color:0x222222, side:THREE.BackSide, shininess:2, specular:0x000000 }));
   vaseGroup = new THREE.Group();
   vaseGroup.add(makeWheelHead());                 // spins with the clay → visible rotation
@@ -325,31 +411,48 @@ function initMeshes(){
   scene.add(vaseGroup);
 }
 
-/* ---- profile → lathe points (leading (0,0) closes the bottom disc) ---- */
+/* ---- profile → outer lathe points (leading (0,0) closes the bottom disc) ---- */
 function profileToPoints(){
   const pts = [ new THREE.Vector2(0,0) ];
   for (let i=0;i<N;i++) pts.push(new THREE.Vector2(Math.max(0.0001, profileR[i]), yAt(i)));
   return pts;
 }
+// Inner cavity points: a closed floor at cavityFloor, walls (outer−WALL) up to the rim.
+function cavityToPoints(){
+  // cavityFloor is a FLOAT (deepens by 1.8/frame), so it MUST be rounded before use as an array index —
+  // profileR[65.0001] is undefined → NaN vertices → corrupted geometry every frame. (real bugfix)
+  const cf = Math.max(0, Math.min(N-1, Math.round(cavityFloor)));
+  const pts = [ new THREE.Vector2(0.0001, yAt(cf)) ];           // floor centre
+  for (let i=cf;i<N;i++) pts.push(new THREE.Vector2(Math.max(0.6, innerRadius(i)), yAt(i)));
+  return pts;
+}
 
-/* ---- update mesh geometry in place: lathe + two-layer hollow ---- */
+// FULL closed cross-section of the pot: up the OUTSIDE, across the RIM (real wall thickness — this is
+// the brim cap that was missing), down the INSIDE, across the floor. Lathed once → a single watertight
+// shell with a solid-looking rim (no see-through "cut off" brim / gap between two separate meshes).
+function vesselToPoints(){
+  const cf = Math.max(0, Math.min(N-1, Math.round(cavityFloor)));
+  const opened = cf < N - 4;
+  const pts = [ new THREE.Vector2(0, 0) ];                                  // bottom centre
+  for (let i=0;i<N;i++) pts.push(new THREE.Vector2(Math.max(0.0001, profileR[i]), yAt(i)));  // outer wall up
+  if (!opened) return pts;                                                  // solid mound — no hole yet
+  pts.push(new THREE.Vector2(Math.max(0.6, innerRadius(N-1)), yAt(N-1)));   // RIM cap: step in by the wall
+  for (let i=N-1;i>=cf;i--) pts.push(new THREE.Vector2(Math.max(0.6, innerRadius(i)), yAt(i)));  // inner wall down
+  pts.push(new THREE.Vector2(0.0001, yAt(cf)));                             // cavity floor centre
+  return pts;
+}
+
+/* ---- update mesh: ONE closed hollow vessel (outer + rim + inner + floor) so the brim is solid ---- */
 function updateMesh(){
-  const geo = new THREE.LatheGeometry(profileToPoints(), 96);
-  const innerGeo = geo.clone();
-  geo.computeBoundingBox();
-  const hMM = geo.boundingBox.max.y - geo.boundingBox.min.y, gap=3;
-
-  // color comes from the material now (single-color clay), so the ring bump map can show
+  const geo = new THREE.LatheGeometry(vesselToPoints(), 64);
+  geo.computeVertexNormals();
   const rgb = COLORS[state.colorIdx].rgb;
   meshOuter.material.color.setRGB(rgb[0], rgb[1], rgb[2]);
-  meshInner.material.color.setRGB(rgb[0]*0.4, rgb[1]*0.4, rgb[2]*0.4);
 
   if (meshOuter.geometry) meshOuter.geometry.dispose();
-  if (meshInner.geometry) meshInner.geometry.dispose();
   meshOuter.geometry = geo;
-  meshInner.geometry = innerGeo;
-  meshInner.scale.set(0.93, Math.max(0.5,(hMM-2*gap)/hMM), 0.93);
-  meshInner.position.y = gap;
+  meshOuter.scale.set(1,1,1); meshOuter.position.y = 0;
+  meshInner.visible = false;        // cavity is now part of the single closed mesh — no separate inner shell
 
   updatePrice(); updateDimensions(); checkPrintability();
 }
@@ -357,17 +460,16 @@ const rebuild = updateMesh;   // alias: existing call sites keep working
 
 /* ---- pricing: reuse COST + formula; surface-of-revolution volume integral ---- */
 function estimateVolume(){               // cm³ of wall shell
+  // Smooth average-radius shell (same robust approach as the slider customizer). The earlier
+  // frustum-slant sum amplified tiny radius changes between adjacent samples, so pressing a DENT
+  // inward inflated the surface area → price went UP when the pot got smaller. Averaging the radius
+  // tracks real size: press in → smaller avg → lower price; press out → bigger → higher.
   const wall_cm = 0.15;
-  const dy_cm = (H/(N-1))/10;
-  let lateral = 0;
-  for (let i=1;i<N;i++){
-    const r0 = profileR[i-1]/10, r1 = profileR[i]/10;
-    const slant = Math.sqrt((r1-r0)*(r1-r0) + dy_cm*dy_cm);
-    lateral += Math.PI*(r0+r1)*slant;    // frustum lateral area
-  }
-  const baseR = Math.max(profileR[1], profileR[2])/10;
-  const baseArea = Math.PI*baseR*baseR;  // closed bottom disc
-  return (lateral + baseArea) * wall_cm;
+  let sumR = 0; for (let i=1;i<N;i++) sumR += profileR[i];
+  const avgR_cm = (sumR/(N-1))/10;
+  const h_cm = H/10;
+  const shellArea = 2*Math.PI*avgR_cm*h_cm + Math.PI*avgR_cm*avgR_cm;   // wall + closed-bottom disc
+  return shellArea * wall_cm;
 }
 function updatePrice(){
   const grams = estimateVolume()*1.24;
@@ -398,7 +500,8 @@ function updateDimensions(){
 function checkPrintability(){
   let maxR = 0; for (let i=0;i<N;i++) maxR = Math.max(maxR, profileR[i]);
   let msg = '// PRINTABLE ✓', warn = false;
-  if (2*maxR > 215)               { msg = '// CHECK: near max width'; warn = true; }
+  if (sculptStep === 'hole'){ msg = '// SOLID LUMP — OPEN IT'; warn = false; }  // expected closed before opening
+  else if (2*maxR > 215)               { msg = '// CHECK: near max width'; warn = true; }
   else if (profileR[N-1] < MIN_R+1){ msg = '// CHECK: tip nearly closed'; warn = true; }
   const el = document.getElementById('printChip');
   el.textContent = msg;
@@ -429,7 +532,7 @@ function pickFromPointer(clientX, clientY){
 
 /* ---- brush: Gaussian ease toward cursor radius, then global clamp ---- */
 let BRUSH = 9;                  // half-width in samples (slider 6..24)
-const PRESS_RATE = 0.13;        // mm of clay that yields PER FRAME while you hold (× brush weight) — ~7-8mm/s, controllable
+const PRESS_RATE = 0.11;        // mm of clay that yields PER FRAME while you hold (× brush weight) — registers clearly without being twitchy
 // PRESSURE model (not position): while you hold, the clay slowly yields in the pressed direction —
 // dir = -1 pushes the wall IN (denting the body), dir = +1 pulls it OUT. The cursor only selects the
 // height + (at touch-down) which direction. Holding longer = more give, exactly like pressing real clay.
@@ -443,7 +546,7 @@ function applyPress(idx, dir){
     profileR[i] = before + dir * PRESS_RATE * w;
     const dd = Math.abs(profileR[i]-before); if (dd>maxDelta) maxDelta=dd;
   }
-  laplacian(1, 0.12);           // light anti-jaggy pass
+  laplacian(1, 0.06);           // light anti-jaggy pass (low λ so presses aren't smoothed away as you make them)
   clampProfile();               // global printability + closed-bottom guarantee
   return maxDelta;
 }
@@ -477,17 +580,42 @@ let mode = 'sculpt';            // 'sculpt' | 'rotate'
 let pending = null, dirty = false;
 const undoStack = [];
 const pointers = new Map();     // active pointers for multi-touch
-let orbitPrev = null, pinchPrev = 0;
+let orbitPrev = null, pinchPrev = 0, dragOrbit = false;
 
 function pushUndo(){ undoStack.push(profileR.slice()); if (undoStack.length>20) undoStack.shift(); }
 function fadeOverlay(){ const o=document.getElementById('overlay'); if(o) o.style.opacity='0'; }
 function showContact(cx,cy){ const d=document.getElementById('contactDot'); const r=canvas.parentElement.getBoundingClientRect(); d.style.left=(cx-r.left)+'px'; d.style.top=(cy-r.top)+'px'; d.style.display='block'; }
 function hideContact(){ document.getElementById('contactDot').style.display='none'; }
+function setStep(step){
+  sculptStep = step;
+  const sh=document.getElementById('step-hole'), ss=document.getElementById('step-sculpt'),
+        sf=document.getElementById('step-fire'), tip=document.getElementById('tooltip'),
+        fireBtn=document.getElementById('fireBtn');
+  if (step==='hole'){
+    sh.className='step active'; ss.className='step'; sf.className='step';
+    tip.textContent='Press & hold on the clay to open a hole'; tip.style.opacity='1'; tip.style.display='block';
+    if (fireBtn) fireBtn.disabled = true;
+  } else if (step==='sculpt'){
+    sh.className='step done'; ss.className='step active'; sf.className='step';
+    tip.textContent='Shape the walls — then 🔥 fire it when you love it'; tip.style.opacity='1'; tip.style.display='block';
+    setTimeout(()=>{ if(sculptStep==='sculpt') tip.style.opacity='0'; }, 4000);
+    if (fireBtn) fireBtn.disabled = false;        // pot is open → firing unlocks
+  } else if (step==='fire'){
+    sh.className='step done'; ss.className='step done'; sf.className='step active';
+  }
+}
 
 function isOrbitGesture(e){
   return (e.pointerType!=='touch' && e.button===2) || mode==='rotate' || pointers.size>=2;
 }
 
+// Empty-space drag → orbit the camera (in addition to right-drag / two-finger).
+function startDragOrbit(e){
+  dragOrbit = true; sculpting = false;
+  orbitPrev = {x:e.clientX, y:e.clientY};
+  try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
+  e.preventDefault();
+}
 canvas.addEventListener('contextmenu', e=>e.preventDefault());   // allow right-drag orbit w/o menu
 canvas.addEventListener('pointerdown', e=>{
   pointers.set(e.pointerId, {x:e.clientX,y:e.clientY});
@@ -498,12 +626,30 @@ canvas.addEventListener('pointerdown', e=>{
     if (pointers.size>=2){ pinchPrev = pinchDist(); }
     e.preventDefault(); return;
   }
-  // sculpt — latch the press direction NOW: cursor inside the wall ⇒ push IN, outside ⇒ pull OUT
-  canvas.setPointerCapture(e.pointerId);
+  if (firing || fired){ e.preventDefault(); return; }     // can't reshape a fired pot — RESET to start over
+  const rect = canvas.getBoundingClientRect();
+  const ndc = { x:((e.clientX-rect.left)/rect.width)*2-1, y:-((e.clientY-rect.top)/rect.height)*2+1 };
+  raycaster.setFromCamera(ndc, camera);
+  const onClay = raycaster.intersectObject(meshOuter, false).length > 0;
+  const pk0 = pickFromPointer(e.clientX, e.clientY);
+
+  if (sculptStep === 'hole'){
+    // STEP 1 "create a hole": press the lump (anywhere on it) and hold → it opens. Direction n/a.
+    if (!onClay){ startDragOrbit(e); return; }                       // empty space → orbit the view
+  } else {
+    // STEP 2 "sculpt" — RAYCAST decides direction: pressing ON the clay dents IN; pressing just
+    // outside the edge pulls OUT. (Avoids the edge-ambiguity that used to make it "expand".)
+    if (onClay) {
+      pressDir = -1;                                                 // pressing the clay → push IN
+    } else if (pk0.cursorR > profileR[pk0.idx] && pk0.cursorR < profileR[pk0.idx] + 60) {
+      pressDir = +1;                                                 // just outside the edge → pull OUT
+    } else {
+      startDragOrbit(e); return;                                     // empty space → orbit the view
+    }
+  }
+  try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
   pushUndo();
   sculpting = true;
-  const pk0 = pickFromPointer(e.clientX, e.clientY);
-  pressDir = (pk0.cursorR < profileR[pk0.idx]) ? -1 : +1;
   if (navigator.vibrate) navigator.vibrate(8);
   pending = {x:e.clientX, y:e.clientY}; dirty = true;
   showContact(e.clientX, e.clientY);
@@ -522,7 +668,7 @@ canvas.addEventListener('pointermove', e=>{
     pinchPrev = pd;
     e.preventDefault(); return;
   }
-  if (mode==='rotate' && orbitPrev){
+  if ((mode==='rotate' || dragOrbit) && orbitPrev){
     camAngleY -= (e.clientX-orbitPrev.x)*.01; camAngleX -= (e.clientY-orbitPrev.y)*.01;
     camAngleX=Math.max(0.15,Math.min(Math.PI-0.15,camAngleX)); updateCamera();
     orbitPrev = {x:e.clientX,y:e.clientY}; e.preventDefault(); return;
@@ -536,7 +682,10 @@ canvas.addEventListener('pointermove', e=>{
 function endPointer(e){
   pointers.delete(e.pointerId);
   if (pointers.size<2){ pinchPrev = 0; }
-  if (pointers.size===0){ sculpting = false; orbitPrev = null; hideContact(); }
+  if (pointers.size===0){
+    if (sculptStep==='hole' && holeIsOpen()) setStep('sculpt');   // advance once you've opened it
+    sculpting = false; orbitPrev = null; dragOrbit = false; hideContact();
+  }
 }
 canvas.addEventListener('pointerup', endPointer);
 canvas.addEventListener('pointercancel', endPointer);
@@ -555,10 +704,15 @@ function animate(){
   requestAnimationFrame(animate);
   if (vaseGroup && spinOn) vaseGroup.rotation.y += SPIN_SPEED;
   if (sculpting && pending){
-    const { idx } = pickFromPointer(pending.x, pending.y);   // cursor selects WHICH height to press
-    const delta = applyPress(idx, pressDir);                 // clay yields in the latched direction while held
-    if (delta > 0.02) updateMesh();
-    else { updatePrice(); checkPrintability(); }
+    if (sculptStep === 'hole'){
+      openHolePress();                                       // deepen + flare while held (advances on release)
+      updateMesh();
+    } else {
+      const { idx } = pickFromPointer(pending.x, pending.y); // cursor selects WHICH height to press
+      const delta = applyPress(idx, pressDir);               // clay yields in the latched direction while held
+      if (delta > 0.02) updateMesh();
+      else { updatePrice(); checkPrintability(); }
+    }
   }
   renderer.render(scene, camera);
 }
@@ -629,12 +783,80 @@ async function build3MFBlob(){
 }
 
 /* ---- UI wiring ---- */
-document.getElementById('resetBtn').addEventListener('click', ()=>{ pushUndo(); initClay(); rebuild(); });
+document.getElementById('resetBtn').addEventListener('click', ()=>{ pushUndo(); unfire(); initClay(); setStep('hole'); rebuild(); });
 document.getElementById('smoothBtn').addEventListener('click', ()=>{ pushUndo(); laplacian(4,0.5); rebuild(); });
 document.getElementById('undoBtn').addEventListener('click', ()=>{ if(undoStack.length){ profileR.set(undoStack.pop()); clampProfile(); rebuild(); } });
 document.getElementById('spinBtn').addEventListener('click', e=>{ spinOn=!spinOn; e.target.textContent='SPIN: '+(spinOn?'ON':'OFF'); e.target.classList.toggle('on',spinOn); });
 const rotateBtn = document.getElementById('rotateBtn');
 rotateBtn.addEventListener('click', ()=>{ mode = (mode==='rotate')?'sculpt':'rotate'; rotateBtn.classList.toggle('on', mode==='rotate'); rotateBtn.textContent = mode==='rotate'?'SCULPT':'ROTATE VIEW'; });
+
+/* ---- KILN FINALE: heat the pot to a glow, then cool to a fired, glazed finish (Google's last step) ---- */
+let fired = false, firing = false;
+function setFiredLook(t){
+  // t: 0 = raw clay → 1 = fully fired. Deepen + saturate the clay and add a glaze sheen.
+  const base = COLORS[state.colorIdx].rgb;
+  meshOuter.material.color.setRGB(base[0]*(1-0.18*t), base[1]*(1-0.22*t), base[2]*(1-0.10*t));
+  meshOuter.material.shininess = 5 + 45*t;                 // glaze gloss
+  meshOuter.material.specular.setRGB(0.08+0.30*t, 0.06+0.22*t, 0.04+0.14*t);
+}
+function fireKiln(){
+  if (fired || firing) return;
+  firing = true;
+  const fireBtn=document.getElementById('fireBtn'), flash=document.getElementById('kilnFlash'),
+        banner=document.getElementById('firedBanner'), tip=document.getElementById('tooltip');
+  fireBtn.classList.add('firing'); fireBtn.textContent='🔥 FIRING…';
+  tip.textContent='🔥 in the kiln…'; tip.style.opacity='1'; tip.style.display='block';
+  flash.style.background='radial-gradient(circle at 50% 62%, rgba(255,150,40,.55) 0%, rgba(180,40,0,.30) 45%, rgba(40,8,0,0) 78%)';
+  const heat=1400, soak=600, cool=2200, total=heat+soak+cool;
+  const startMat = meshOuter.material;
+  // animate with timestamps so it works regardless of the main render loop
+  let t0=null;
+  function tick(ts){
+    if (t0===null) t0=ts;
+    const e = ts - t0;
+    let glow;                                               // 0..1 heat glow
+    if (e < heat)               glow = e/heat;
+    else if (e < heat+soak)     glow = 1;
+    else                        glow = Math.max(0, 1-(e-heat-soak)/cool);
+    // emissive heat: black → hot orange
+    startMat.emissive.setRGB(1.0*glow, 0.32*glow, 0.04*glow);
+    startMat.emissiveIntensity = glow;
+    flash.style.opacity = (glow*0.9).toFixed(3);
+    // fired finish ramps in during the cool-down
+    const firedness = e < heat+soak ? 0 : Math.min(1,(e-heat-soak)/cool);
+    setFiredLook(firedness);
+    renderer.render(scene, camera);
+    if (e < total){ requestAnimationFrame(tick); }
+    else { finishFire(); }
+  }
+  requestAnimationFrame(tick);
+}
+function finishFire(){
+  firing = false; fired = true;
+  const fireBtn=document.getElementById('fireBtn'), banner=document.getElementById('firedBanner'),
+        tip=document.getElementById('tooltip'), quoteBtn=document.getElementById('quoteBtn');
+  meshOuter.material.emissive.setRGB(0,0,0); meshOuter.material.emissiveIntensity=0;
+  setFiredLook(1);
+  document.getElementById('kilnFlash').style.opacity='0';
+  fireBtn.classList.remove('firing'); fireBtn.textContent='✓ FIRED'; fireBtn.disabled=true;
+  setStep('fire');
+  tip.style.opacity='0';
+  banner.classList.add('show');
+  setTimeout(()=>banner.classList.remove('show'), 2600);
+  if (quoteBtn) quoteBtn.textContent='ORDER THIS POT →';
+  if (navigator.vibrate) navigator.vibrate([10,40,10]);
+}
+function unfire(){   // called on RESET so a fresh lump is raw clay again
+  fired=false; firing=false;
+  const fireBtn=document.getElementById('fireBtn');
+  if (fireBtn){ fireBtn.classList.remove('firing'); fireBtn.textContent='🔥 FIRE IT IN THE KILN'; fireBtn.disabled=true; }
+  meshOuter.material.emissive.setRGB(0,0,0); meshOuter.material.emissiveIntensity=0;
+  meshOuter.material.shininess=5; meshOuter.material.specular.setRGB(0.08,0.06,0.03);
+  document.getElementById('firedBanner').classList.remove('show');
+  document.getElementById('kilnFlash').style.opacity='0';
+  const quoteBtn=document.getElementById('quoteBtn'); if(quoteBtn) quoteBtn.textContent='REQUEST CUSTOM PRINT →';
+}
+document.getElementById('fireBtn').addEventListener('click', fireKiln);
 const brushSlider = document.getElementById('brushSlider');
 brushSlider.addEventListener('input', e=>{ BRUSH=parseInt(e.target.value); document.getElementById('brushVal').textContent=(BRUSH*(H/(N-1))/10).toFixed(1)+'cm'; });
 const heightSlider = document.getElementById('heightSlider');
@@ -707,9 +929,9 @@ document.getElementById('downloadBtn').addEventListener('click', async ()=>{
 });
 
 /* ---- boot ---- */
-initClay(); initMeshes(); resizeRenderer(); updateMesh(); buildColorGrid(); updateCamera(); animate();
+initClay(); initMeshes(); resizeRenderer(); updateMesh(); buildColorGrid(); setStep('hole'); updateCamera(); animate();
 document.getElementById('brushVal').textContent=(BRUSH*(H/(N-1))/10).toFixed(1)+'cm';
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">sculpt v5</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">sculpt v14</div>
 </body>
 </html>
