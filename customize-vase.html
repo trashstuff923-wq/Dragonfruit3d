@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dragonfruit 3D Vase Customizer · v41 (Jun 21) · Patterns: Bands, Accent (rim+foot), Dip (adjustable two-tone), Rhythm (thick/thin) — all height-based/AMS-friendly, clean min-Y edges. Removed Stripes + Split. Multi-color 3MF via <m:colorgroup> (Variant B — loads with color in Bambu). Fixed sawtooth "razor" band edges (color bands by face min-Y so both triangles of a lathe quad match). 3MF still geometry-only. -->
+<!-- Dragonfruit 3D Vase Customizer · v41 (Jun 21) · Patterns: Bands, Accent (rim+foot), Dip (adjustable two-tone), Rhythm (multi-width) — all height-based/AMS-friendly, clean min-Y edges. Removed Stripes + Split. Multi-color 3MF via <m:colorgroup> (Variant B — loads with color in Bambu). Fixed sawtooth "razor" band edges (color bands by face min-Y so both triangles of a lathe quad match). 3MF still geometry-only. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -502,13 +502,15 @@ function applyColorPattern(geometry) {
   }
   const N = activeColors.length;
 
-  // RHYTHM pattern: bands of ALTERNATING thickness (thick/thin). Precompute the normalized cumulative
-  // band edges once (not per-face). weight 2 for even bands, 1 for odd → thick, thin, thick, thin…
+  // RHYTHM pattern: bands of VARIED thickness. A plain 2:1 alternation flattens into even stripes at
+  // high band counts, so use a repeating MULTI-WIDTH rhythm (big / thin / medium / thin) — keeps strong,
+  // varied line widths no matter how many bands. Precompute the normalized cumulative edges once.
   let rhythmEdges = null;
   if (state.pattern === 'rhythm') {
     const S = Math.max(2, state.sections|0);
+    const RHY = [4, 1, 2, 1];
     let tot = 0; const w = [];
-    for (let i=0;i<S;i++){ const ww = (i%2===0)?2:1; w.push(ww); tot += ww; }
+    for (let i=0;i<S;i++){ const ww = RHY[i % RHY.length]; w.push(ww); tot += ww; }
     rhythmEdges = []; let acc = 0;
     for (let i=0;i<S;i++){ acc += w[i]/tot; rhythmEdges.push(acc); }
   }
@@ -1284,6 +1286,6 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
 
 buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera(); animate();
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v41</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v42</div>
 </body>
 </html>
