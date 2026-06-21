@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dragonfruit 3D Vase Customizer · v39 (Jun 21) · Multi-color 3MF via <m:colorgroup> (Variant B — loads with color in Bambu). Fixed sawtooth "razor" band edges (color bands by face min-Y so both triangles of a lathe quad match). 3MF still geometry-only. -->
+<!-- Dragonfruit 3D Vase Customizer · v40 (Jun 21) · Removed vertical Stripes pattern (AMS waste/time). Multi-color 3MF via <m:colorgroup> (Variant B — loads with color in Bambu). Fixed sawtooth "razor" band edges (color bands by face min-Y so both triangles of a lathe quad match). 3MF still geometry-only. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -151,14 +151,12 @@
 
     <div class="ctrl-section" id="patternSection" style="display:none">
       <div class="ctrl-label">// PATTERN</div>
-      <div class="grid-3" id="patternGrid">
+      <!-- Stripes pattern removed (v40): vertical stripes switch color many times PER layer → huge
+           AMS purge waste + 2-3x print time. Bands + Split are the AMS-efficient options. -->
+      <div class="grid-2" id="patternGrid">
         <button class="opt-btn active" data-pattern="bands">
           <svg viewBox="0 0 32 32" width="28" height="28" style="display:block;margin:0 auto 4px;border-radius:3px"><rect x="0" y="0" width="32" height="8" fill="#ff0096"/><rect x="0" y="8" width="32" height="8" fill="#00d4ff"/><rect x="0" y="16" width="32" height="8" fill="#ff0096"/><rect x="0" y="24" width="32" height="8" fill="#00d4ff"/></svg>
           <span class="sub">Bands</span>
-        </button>
-        <button class="opt-btn" data-pattern="stripes">
-          <svg viewBox="0 0 32 32" width="28" height="28" style="display:block;margin:0 auto 4px;border-radius:3px"><rect x="0" y="0" width="8" height="32" fill="#ff0096"/><rect x="8" y="0" width="8" height="32" fill="#00d4ff"/><rect x="16" y="0" width="8" height="32" fill="#ff0096"/><rect x="24" y="0" width="8" height="32" fill="#00d4ff"/></svg>
-          <span class="sub">Stripes</span>
         </button>
         <button class="opt-btn" data-pattern="split">
           <svg viewBox="0 0 32 32" width="28" height="28" style="display:block;margin:0 auto 4px;border-radius:3px"><rect x="0" y="0" width="32" height="16" fill="#00d4ff"/><rect x="0" y="16" width="32" height="16" fill="#ff0096"/></svg>
@@ -1237,6 +1235,6 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
 
 buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera(); animate();
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v39</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v40</div>
 </body>
 </html>
