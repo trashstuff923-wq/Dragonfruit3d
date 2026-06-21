@@ -760,11 +760,19 @@ function build3MFModel(geometry){
     const nz=(pos.getY(i)-minY).toFixed(3);
     vertLines[i]='          <vertex x="'+nx+'" y="'+ny+'" z="'+nz+'"/>';
   }
+  // COLOR: the pot is one color — embed it via the official 3MF material extension <m:colorgroup>
+  // (id=2) so it opens pre-colored in Bambu (same encoding that worked for the vase customizer;
+  // the proprietary paint_color attribute crashes Bambu). Every face → slot 0.
+  const h2 = v => Math.max(0,Math.min(255,Math.round(v*255))).toString(16).padStart(2,'0').toUpperCase();
+  const rgb = COLORS[state.colorIdx].rgb;
+  const hex = '#'+h2(rgb[0])+h2(rgb[1])+h2(rgb[2])+'FF';
   const triLines = new Array(triCount);
-  for (let f=0;f<triCount;f++){ const v0=f*3; triLines[f]='     <triangle v1="'+v0+'" v2="'+(v0+1)+'" v3="'+(v0+2)+'"/>'; }
+  for (let f=0;f<triCount;f++){ const v0=f*3; triLines[f]='     <triangle v1="'+v0+'" v2="'+(v0+1)+'" v3="'+(v0+2)+'" pid="2" p1="0"/>'; }
   return '<?xml version="1.0" encoding="UTF-8"?>\n' +
-    '<model unit="millimeter" xml:lang="en-US"\n       xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">\n' +
-    ' <metadata name="Application">DragonfruitPotteryWheel</metadata>\n <resources>\n  <object id="1" type="model">\n   <mesh>\n    <vertices>\n' +
+    '<model unit="millimeter" xml:lang="en-US"\n       xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"\n       xmlns:m="http://schemas.microsoft.com/3dmanufacturing/material/2015/02">\n' +
+    ' <metadata name="Application">DragonfruitPotteryWheel</metadata>\n <resources>\n' +
+    '  <m:colorgroup id="2">\n   <m:color color="'+hex+'"/>\n  </m:colorgroup>\n' +
+    '  <object id="1" type="model" pid="2" pindex="0">\n   <mesh>\n    <vertices>\n' +
     vertLines.join('\n') + '\n    </vertices>\n    <triangles>\n' + triLines.join('\n') + '\n    </triangles>\n   </mesh>\n  </object>\n </resources>\n <build>\n  <item objectid="1"/>\n </build>\n</model>\n';
 }
 function buildPrintGeometry(){
@@ -932,6 +940,6 @@ document.getElementById('downloadBtn').addEventListener('click', async ()=>{
 initClay(); initMeshes(); resizeRenderer(); updateMesh(); buildColorGrid(); setStep('hole'); updateCamera(); animate();
 document.getElementById('brushVal').textContent=(BRUSH*(H/(N-1))/10).toFixed(1)+'cm';
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">sculpt v14</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">sculpt v15</div>
 </body>
 </html>
