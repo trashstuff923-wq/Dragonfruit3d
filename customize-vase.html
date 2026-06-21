@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dragonfruit 3D Vase Customizer · v40 (Jun 21) · Removed vertical Stripes pattern (AMS waste/time). Multi-color 3MF via <m:colorgroup> (Variant B — loads with color in Bambu). Fixed sawtooth "razor" band edges (color bands by face min-Y so both triangles of a lathe quad match). 3MF still geometry-only. -->
+<!-- Dragonfruit 3D Vase Customizer · v41 (Jun 21) · Patterns: Bands, Accent (rim+foot), Dip (adjustable two-tone), Rhythm (thick/thin) — all height-based/AMS-friendly, clean min-Y edges. Removed Stripes + Split. Multi-color 3MF via <m:colorgroup> (Variant B — loads with color in Bambu). Fixed sawtooth "razor" band edges (color bands by face min-Y so both triangles of a lathe quad match). 3MF still geometry-only. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -151,25 +151,38 @@
 
     <div class="ctrl-section" id="patternSection" style="display:none">
       <div class="ctrl-label">// PATTERN</div>
-      <!-- Stripes pattern removed (v40): vertical stripes switch color many times PER layer → huge
-           AMS purge waste + 2-3x print time. Bands + Split are the AMS-efficient options. -->
+      <!-- Patterns are ALL height-based (color changes only by height, never within a layer) so the
+           AMS purges minimally. Stripes + Split removed (v40/v41): stripes wasted filament every layer;
+           split was just a 2-band Band. New: Accent (rim+foot), Dip (adjustable two-tone), Rhythm. -->
       <div class="grid-2" id="patternGrid">
         <button class="opt-btn active" data-pattern="bands">
           <svg viewBox="0 0 32 32" width="28" height="28" style="display:block;margin:0 auto 4px;border-radius:3px"><rect x="0" y="0" width="32" height="8" fill="#ff0096"/><rect x="0" y="8" width="32" height="8" fill="#00d4ff"/><rect x="0" y="16" width="32" height="8" fill="#ff0096"/><rect x="0" y="24" width="32" height="8" fill="#00d4ff"/></svg>
           <span class="sub">Bands</span>
         </button>
-        <button class="opt-btn" data-pattern="split">
-          <svg viewBox="0 0 32 32" width="28" height="28" style="display:block;margin:0 auto 4px;border-radius:3px"><rect x="0" y="0" width="32" height="16" fill="#00d4ff"/><rect x="0" y="16" width="32" height="16" fill="#ff0096"/></svg>
-          <span class="sub">Split</span>
+        <button class="opt-btn" data-pattern="accent">
+          <svg viewBox="0 0 32 32" width="28" height="28" style="display:block;margin:0 auto 4px;border-radius:3px"><rect x="0" y="0" width="32" height="6" fill="#ff0096"/><rect x="0" y="6" width="32" height="20" fill="#00d4ff"/><rect x="0" y="26" width="32" height="6" fill="#ff0096"/></svg>
+          <span class="sub">Accent</span>
+        </button>
+        <button class="opt-btn" data-pattern="dip">
+          <svg viewBox="0 0 32 32" width="28" height="28" style="display:block;margin:0 auto 4px;border-radius:3px"><rect x="0" y="0" width="32" height="13" fill="#00d4ff"/><rect x="0" y="13" width="32" height="19" fill="#ff0096"/></svg>
+          <span class="sub">Dip</span>
+        </button>
+        <button class="opt-btn" data-pattern="rhythm">
+          <svg viewBox="0 0 32 32" width="28" height="28" style="display:block;margin:0 auto 4px;border-radius:3px"><rect x="0" y="0" width="32" height="11" fill="#ff0096"/><rect x="0" y="11" width="32" height="5" fill="#00d4ff"/><rect x="0" y="16" width="32" height="11" fill="#ff0096"/><rect x="0" y="27" width="32" height="5" fill="#00d4ff"/></svg>
+          <span class="sub">Rhythm</span>
         </button>
       </div>
-      <div class="slider-row">
+      <div class="slider-row" id="numColorsRow">
         <div class="slider-head"><span class="name">Number of colors</span><span class="val" id="val-numColors">2</span></div>
         <input type="range" id="numColorsSlider" min="2" max="4" step="1" value="2">
       </div>
       <div class="slider-row" id="sectionsSliderRow">
         <div class="slider-head"><span class="name" id="sectionsLabel">Number of bands</span><span class="val" id="val-sections">4</span></div>
         <input type="range" id="sectionsSlider" min="2" max="12" step="1" value="4">
+      </div>
+      <div class="slider-row" id="dipSliderRow" style="display:none">
+        <div class="slider-head"><span class="name">Dip line (height)</span><span class="val" id="val-dipLine">50%</span></div>
+        <input type="range" id="dipLineSlider" min="20" max="80" step="1" value="50">
       </div>
       <div id="patternHint" style="margin-top:8px;font-size:11px;color:#ff9d00;font-family:'Space Mono',monospace;display:none">// Pick a 2nd color below to see the pattern on the vase ↓</div>
     </div>
@@ -291,7 +304,7 @@ const COST = {
 
 let state = { 
   style:'pottery', params:{}, scale: 1, finish: 'single',
-  pattern: 'bands', numColors: 2, sections: 4,
+  pattern: 'bands', numColors: 2, sections: 4, dipLine: 0.5,
   colorIdx: 1, secondaryColors: [],  // default = Cyan (matches product default)
 };
 function resetParams(s){ state.params={}; for(const[k,v] of Object.entries(STYLES[s].params)) state.params[k]=v.val; }
@@ -489,6 +502,17 @@ function applyColorPattern(geometry) {
   }
   const N = activeColors.length;
 
+  // RHYTHM pattern: bands of ALTERNATING thickness (thick/thin). Precompute the normalized cumulative
+  // band edges once (not per-face). weight 2 for even bands, 1 for odd → thick, thin, thick, thin…
+  let rhythmEdges = null;
+  if (state.pattern === 'rhythm') {
+    const S = Math.max(2, state.sections|0);
+    let tot = 0; const w = [];
+    for (let i=0;i<S;i++){ const ww = (i%2===0)?2:1; w.push(ww); tot += ww; }
+    rhythmEdges = []; let acc = 0;
+    for (let i=0;i<S;i++){ acc += w[i]/tot; rhythmEdges.push(acc); }
+  }
+
   // Step 2: iterate per face (3 verts at a time), pick one color from the centroid, paint all 3.
   for (let f = 0; f < count; f += 3) {
     const x0 = positions.getX(f), y0 = positions.getY(f), z0 = positions.getZ(f);
@@ -508,14 +532,24 @@ function applyColorPattern(geometry) {
       const tb = yRange > 0 ? (fy - minY) / yRange : 0;
       const bandIdx = Math.min(S - 1, Math.floor(tb * S));
       c = activeColors[bandIdx % N];
-    } else if (state.pattern === 'stripes') {
-      const S = Math.max(2, state.sections|0);
-      const angle = Math.atan2(cz, cx);
-      const normalized = (angle + Math.PI) / (2 * Math.PI);
-      const stripeIdx = Math.min(S - 1, Math.floor(normalized * S));
-      c = activeColors[stripeIdx % N];
-    } else if (state.pattern === 'split') {
-      c = t < 0.5 ? activeColors[0] : (activeColors[1] || activeColors[0]);
+    } else if (state.pattern === 'accent') {
+      // solid body + contrast band on the bottom foot AND top rim (classic pottery). 2 colors.
+      const fy = Math.min(y0, y1, y2);
+      const tb = yRange > 0 ? (fy - minY) / yRange : 0;
+      const edge = 0.12;                          // fraction of height for the rim/foot accent
+      const accent = activeColors[1] || activeColors[0];
+      c = (tb < edge || tb > 1 - edge) ? accent : activeColors[0];
+    } else if (state.pattern === 'dip') {
+      // two-tone with an ADJUSTABLE split line (dip-glaze look). min-Y → clean horizontal edge.
+      const fy = Math.min(y0, y1, y2);
+      const tb = yRange > 0 ? (fy - minY) / yRange : 0;
+      c = tb < state.dipLine ? activeColors[0] : (activeColors[1] || activeColors[0]);
+    } else if (state.pattern === 'rhythm') {
+      // alternating thick/thin bands (precomputed rhythmEdges). min-Y → clean edges.
+      const fy = Math.min(y0, y1, y2);
+      const tb = yRange > 0 ? (fy - minY) / yRange : 0;
+      let bi = 0; while (bi < rhythmEdges.length - 1 && tb >= rhythmEdges[bi]) bi++;
+      c = activeColors[bi % N];
     } else {
       c = activeColors[0];
     }
@@ -599,17 +633,19 @@ function buildVase(){
   if (hintEl) {
     hintEl.style.display = (state.finish === 'multi' && state.secondaryColors.length === 0) ? 'block' : 'none';
   }
-  // Show sections slider only for bands and stripes (split is always 2)
-  const sliderRow = document.getElementById('sectionsSliderRow');
-  const sliderLabel = document.getElementById('sectionsLabel');
-  if (sliderRow && sliderLabel) {
-    if (state.pattern === 'split' || state.finish !== 'multi') {
-      sliderRow.style.display = 'none';
-    } else {
-      sliderRow.style.display = '';
-      sliderLabel.textContent = state.pattern === 'stripes' ? 'Number of stripes' : 'Number of bands';
-    }
-  }
+  // Per-pattern controls: bands/rhythm use #colors (2-4) + #bands; accent/dip are exactly 2 colors;
+  // only dip shows the dip-line slider.
+  const multi = state.finish === 'multi';
+  const numColorsRow = document.getElementById('numColorsRow');
+  const sectionsRow  = document.getElementById('sectionsSliderRow');
+  const sectionsLbl  = document.getElementById('sectionsLabel');
+  const dipRow       = document.getElementById('dipSliderRow');
+  const usesSections = (state.pattern === 'bands' || state.pattern === 'rhythm');
+  const twoColorOnly = (state.pattern === 'accent' || state.pattern === 'dip');
+  if (numColorsRow) numColorsRow.style.display = (multi && !twoColorOnly) ? '' : 'none';
+  if (sectionsRow)  sectionsRow.style.display  = (multi && usesSections) ? '' : 'none';
+  if (sectionsLbl)  sectionsLbl.textContent    = 'Number of bands';
+  if (dipRow)       dipRow.style.display        = (multi && state.pattern === 'dip') ? '' : 'none';
 }
 
 function updateDimensions(){
@@ -890,6 +926,14 @@ document.getElementById('patternGrid').addEventListener('click',e=>{
   document.querySelectorAll('#patternGrid .opt-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   state.pattern = btn.dataset.pattern;
+  // Accent & Dip use EXACTLY 2 colors — clamp so you can't pick 4 that do nothing.
+  if (state.pattern === 'accent' || state.pattern === 'dip') {
+    state.numColors = 2;
+    if (state.secondaryColors.length > 1) state.secondaryColors = state.secondaryColors.slice(0, 1);
+    const ncEl = document.getElementById('numColorsSlider'); if (ncEl) ncEl.value = 2;
+    document.getElementById('val-numColors').textContent = 2;
+    buildColorGrid();
+  }
   buildVase();
 });
 document.getElementById('numColorsSlider').addEventListener('input',e=>{
@@ -904,6 +948,11 @@ document.getElementById('numColorsSlider').addEventListener('input',e=>{
 document.getElementById('sectionsSlider').addEventListener('input',e=>{
   state.sections = parseInt(e.target.value);
   document.getElementById('val-sections').textContent = state.sections;
+  buildVase();
+});
+document.getElementById('dipLineSlider').addEventListener('input',e=>{
+  state.dipLine = parseInt(e.target.value)/100;
+  document.getElementById('val-dipLine').textContent = e.target.value+'%';
   buildVase();
 });
 
@@ -1235,6 +1284,6 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
 
 buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera(); animate();
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v40</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v41</div>
 </body>
 </html>
