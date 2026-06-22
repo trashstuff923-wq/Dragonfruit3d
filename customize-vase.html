@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dragonfruit 3D Vase Customizer · v41 (Jun 21) · Patterns: Bands, Accent (rim+foot), Dip (adjustable two-tone), Rhythm (multi-width) — all height-based/AMS-friendly, clean min-Y edges. Removed Stripes + Split. Multi-color 3MF via <m:colorgroup> (Variant B — loads with color in Bambu). Fixed sawtooth "razor" band edges (color bands by face min-Y so both triangles of a lathe quad match). 3MF still geometry-only. -->
+<!-- Dragonfruit 3D Vase Customizer · v43 (Jun 22) · Added "VIEW IN YOUR ROOM" AR (DF_AR): exports live mesh to GLB+USDZ on click, model-viewer overlay, life-size floor placement. · Patterns: Bands, Accent (rim+foot), Dip (adjustable two-tone), Rhythm (multi-width) — all height-based/AMS-friendly, clean min-Y edges. Removed Stripes + Split. Multi-color 3MF via <m:colorgroup> (Variant B — loads with color in Bambu). Fixed sawtooth "razor" band edges (color bands by face min-Y so both triangles of a lathe quad match). 3MF still geometry-only. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -208,6 +208,7 @@
     </div>
 
     <button class="quote-btn" id="quoteBtn">REQUEST CUSTOM PRINT →</button>
+    <button id="arBtn" style="width:100%;margin-top:8px;padding:13px;background:transparent;color:#00d4ff;border:1px solid #00d4ff;border-radius:8px;font-family:Orbitron,sans-serif;font-weight:700;letter-spacing:1px;cursor:pointer;font-size:13px" title="See this vase at real size in your room (works best on a phone)">📱 VIEW IN YOUR ROOM (AR)</button>
     <!-- Staff-only download button. Visible only when URL has ?staff=1 (e.g. dragonfruit3d.com/customize-vase.html?staff=1) -->
     <button class="download-btn" id="downloadBtn" style="display:none" title="Staff only: Download a 3MF file you can open in Bambu Studio / Cura / PrusaSlicer. Includes per-color material groups for AMS.">⬇ DOWNLOAD 3MF (STAFF)</button>
   </div>
@@ -978,6 +979,17 @@ canvas.addEventListener('touchmove',e=>{if(!isDragging||e.touches.length!==1)ret
 function animate(){requestAnimationFrame(animate);renderer.render(scene,camera);}
 
 const modal=document.getElementById('modalBg');
+// AR "view in your room": export the CURRENT vase to GLB+USDZ at real size.
+document.getElementById('arBtn').addEventListener('click',()=>{
+  const outer = vaseMesh && vaseMesh.children && vaseMesh.children[0];
+  if (!outer || !outer.geometry || !window.DF_AR){ alert('Vase not ready yet — try again in a second.'); return; }
+  DF_AR.view({
+    geometry: outer.geometry,
+    colorHex: COLORS[state.colorIdx].hex,
+    realHeightM: Math.max(0.05, scaledP().height/100),
+    name: 'Dragonfruit Custom Vase'
+  });
+});
 document.getElementById('quoteBtn').addEventListener('click',()=>{
   const p=state.params;
   const lines=[`<b>Style:</b> ${STYLES[state.style].label}`,
@@ -1286,6 +1298,122 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
 
 buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera(); animate();
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v42</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v43</div>
+
+<!-- ============================================================
+     DRAGONFRUIT AR HELPER  (DF_AR)  — "View in your room"
+     Exports the live Three.js mesh to GLB (Android WebXR) + USDZ
+     (iPhone AR Quick Look) on click. No build: libs lazy-loaded.
+     ============================================================ -->
+<script>
+(function(){
+  const CDN = {
+    fflate: 'https://unpkg.com/fflate@0.6.9/umd/index.js',
+    gltf:   'https://unpkg.com/three@0.128.0/examples/js/exporters/GLTFExporter.js',
+    usdz:   'https://unpkg.com/three@0.128.0/examples/js/exporters/USDZExporter.js',
+    mv:     'https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js'
+  };
+  let libsP = null;
+  function loadScript(src, isModule){
+    return new Promise((res, rej)=>{
+      const s = document.createElement('script');
+      s.src = src; if (isModule) s.type = 'module';
+      s.onload = res; s.onerror = ()=>rej(new Error('load '+src));
+      document.head.appendChild(s);
+    });
+  }
+  function loadLibs(){
+    if (libsP) return libsP;
+    libsP = (async ()=>{
+      if (!window.fflate) await loadScript(CDN.fflate);
+      if (!THREE.GLTFExporter) await loadScript(CDN.gltf);
+      if (!THREE.USDZExporter) await loadScript(CDN.usdz);
+      if (!customElements.get('model-viewer')) await loadScript(CDN.mv, true);
+    })();
+    return libsP;
+  }
+  function makeExportMesh(geometry, colorHex, realHeightM){
+    const g = geometry.clone();
+    g.computeVertexNormals();
+    g.center();
+    g.computeBoundingBox();
+    const sz = new THREE.Vector3(); g.boundingBox.getSize(sz);
+    const h = sz.y || sz.x || 1;
+    const scale = (realHeightM || 0.15) / h;
+    g.scale(scale, scale, scale);
+    g.computeBoundingBox();
+    g.translate(0, -g.boundingBox.min.y, 0);
+    const mat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(colorHex || '#ff0096'),
+      metalness: 0.05, roughness: 0.55, side: THREE.DoubleSide
+    });
+    return new THREE.Mesh(g, mat);
+  }
+  function spinner(text){
+    const o = document.createElement('div');
+    o.id = 'dfar-overlay';
+    o.innerHTML =
+      '<div class="dfar-box">'+
+        '<button class="dfar-close" aria-label="Close">×</button>'+
+        '<div class="dfar-stage"><div class="dfar-load">'+text+'</div></div>'+
+      '</div>';
+    document.body.appendChild(o);
+    o.querySelector('.dfar-close').onclick = ()=>o.remove();
+    o.addEventListener('click', e=>{ if(e.target===o) o.remove(); });
+    return o;
+  }
+  async function view(opts){
+    const overlay = spinner('// building 3D model…');
+    try {
+      await loadLibs();
+      const mesh = makeExportMesh(opts.geometry, opts.colorHex, opts.realHeightM);
+      const glbBuf = await new Promise((res, rej)=>{
+        new THREE.GLTFExporter().parse(mesh, res, { binary:true }); // r128: parse(input,onDone,options)
+      });
+      const glbUrl = URL.createObjectURL(new Blob([glbBuf], {type:'model/gltf-binary'}));
+      let usdzUrl = '';
+      try {
+        const usdz = await new THREE.USDZExporter().parse(mesh);
+        usdzUrl = URL.createObjectURL(new Blob([usdz], {type:'model/vnd.usdz+zip'}));
+      } catch(e){ console.warn('USDZ export failed (iPhone AR off):', e); }
+      const stage = overlay.querySelector('.dfar-stage');
+      const heightCm = Math.round((opts.realHeightM||0.15)*100);
+      stage.innerHTML =
+        '<model-viewer src="'+glbUrl+'"'+ (usdzUrl?(' ios-src="'+usdzUrl+'"'):'') +
+        ' alt="'+(opts.name||'Dragonfruit model')+'"'+
+        ' ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" ar-placement="floor"'+
+        ' camera-controls auto-rotate touch-action="pan-y" shadow-intensity="1"'+
+        ' style="width:100%;height:100%;background:#0a0a14;">'+
+          '<button slot="ar-button" class="dfar-arbtn">📱 VIEW IN YOUR ROOM</button>'+
+        '</model-viewer>'+
+        '<div class="dfar-cap">// real size ≈ '+heightCm+'cm tall · tap the button on your phone</div>';
+    } catch(err){
+      console.error(err);
+      overlay.querySelector('.dfar-stage').innerHTML =
+        '<div class="dfar-load">// AR failed to load.<br>Check your connection and try again.</div>';
+    }
+  }
+  window.DF_AR = { view };
+})();
+</script>
+<style>
+#dfar-overlay{position:fixed;inset:0;z-index:99999;background:rgba(3,3,10,.86);
+  backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;
+  font-family:'Space Mono',monospace;}
+#dfar-overlay .dfar-box{position:relative;width:min(560px,96vw);height:min(640px,88vh);
+  background:#0a0a14;border:1px solid #ff0096;border-radius:14px;overflow:hidden;
+  box-shadow:0 0 40px rgba(255,0,150,.35);}
+#dfar-overlay .dfar-stage{width:100%;height:100%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;}
+#dfar-overlay .dfar-close{position:absolute;top:8px;right:12px;z-index:5;background:none;border:none;
+  color:#ff0096;font-size:30px;line-height:1;cursor:pointer;font-family:Orbitron,sans-serif;}
+#dfar-overlay .dfar-load{color:#00d4ff;font-size:14px;text-align:center;padding:24px;}
+#dfar-overlay .dfar-arbtn{position:absolute;bottom:64px;left:50%;transform:translateX(-50%);
+  background:#ff0096;color:#fff;border:none;padding:14px 22px;border-radius:30px;
+  font-family:Orbitron,sans-serif;font-weight:700;letter-spacing:1px;font-size:14px;cursor:pointer;
+  box-shadow:0 4px 20px rgba(255,0,150,.5);white-space:nowrap;}
+#dfar-overlay .dfar-cap{position:absolute;bottom:14px;left:0;right:0;text-align:center;
+  color:#9D4EDD;font-size:11px;pointer-events:none;}
+</style>
 </body>
 </html>
