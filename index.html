@@ -4196,11 +4196,11 @@
             'dragon.stl': 0.12,
             'spiral-stacked-planter.stl': 0.15
         };
-        // Per-model AR orientation (degrees). AR is Y-up; some STLs are Z-up and lie
-        // down. Tweak these if a model looks tipped on your phone, then redeploy.
-        const AR_ROT_X = {
-            '3dbenchy.stl': -90   // benchy STL is Z-up (height along Z) -> stand it up
-        };
+        // Per-model AR orientation override (degrees). Normally auto-orient (largest flat
+        // face -> floor) handles this; set a value here only if a model looks wrong.
+        // Benchy: its biggest flat face is the cabin roof, not the hull, so auto-orient
+        // flips it — pin it to -90 (verified upright).
+        const AR_ROT_X = { '3dbenchy.stl': -90 };
         // Items that should stick to a WALL in AR instead of the floor (wall art).
         const AR_WALL = {};
         function view3DInAR() {
@@ -4460,25 +4460,100 @@
     if (U) out.setAttribute('uv', new THREE.BufferAttribute(U,2));
     return out;
   }
+  // Auto-orient: rotate so the model's LARGEST flat (axis-aligned) face points down —
+  // i.e. the printed base sits on the floor. Fixes tipped-over STLs without per-model guessing.
+  function autoOrientDown(g){
+    const t = g.index ? g.toNonIndexed() : g;
+    const pos = t.attributes.position.array, tri = pos.length/9;
+    const dirs=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+    const area=new Float64Array(6);
+    const A=new THREE.Vector3(),B=new THREE.Vector3(),C=new THREE.Vector3(),ab=new THREE.Vector3(),ac=new THREE.Vector3(),n=new THREE.Vector3();
+    for(let i=0;i<tri;i++){ const o=i*9;
+      A.set(pos[o],pos[o+1],pos[o+2]); B.set(pos[o+3],pos[o+4],pos[o+5]); C.set(pos[o+6],pos[o+7],pos[o+8]);
+      ab.subVectors(B,A); ac.subVectors(C,A); n.crossVectors(ab,ac);
+      const ar=n.length(); if(ar<1e-9) continue; n.multiplyScalar(1/ar);
+      let bi=0,bd=-2; for(let d=0;d<6;d++){ const dot=n.x*dirs[d][0]+n.y*dirs[d][1]+n.z*dirs[d][2]; if(dot>bd){bd=dot;bi=d;} }
+      if(bd>0.9) area[bi]+=ar*0.5;   // only count strongly axis-aligned (flat) faces
+    }
+    let mi=0; for(let d=1;d<6;d++) if(area[d]>area[mi]) mi=d;
+    const baseN=new THREE.Vector3(dirs[mi][0],dirs[mi][1],dirs[mi][2]);
+    const q=new THREE.Quaternion().setFromUnitVectors(baseN, new THREE.Vector3(0,-1,0));
+    g.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(q));
+    return g;
+  }
+  // Multi-color: bake the height-based per-vertex colors into a vertical strip texture
+  // + vertical UVs, so the colors survive in BOTH GLB (Android) and USDZ (iPhone).
+  function applyMultiColor(g){
+    if (!g.attributes.color) return null;
+    g.computeBoundingBox();
+    const minY=g.boundingBox.min.y, hY=(g.boundingBox.max.y-minY)||1;
+    const col=g.attributes.color.array, pos=g.attributes.position.array, cnt=g.attributes.position.count;
+    const H=256, sum=new Float64Array(H*3), num=new Float64Array(H), uv=new Float32Array(cnt*2);
+    for(let i=0;i<cnt;i++){
+      const v=(pos[i*3+1]-minY)/hY; let b=Math.floor(v*(H-1)); if(b<0)b=0; if(b>H-1)b=H-1;
+      sum[b*3]+=col[i*3]; sum[b*3+1]+=col[i*3+1]; sum[b*3+2]+=col[i*3+2]; num[b]++;
+      uv[i*2]=0.5; uv[i*2+1]=v;
+    }
+    g.setAttribute('uv', new THREE.BufferAttribute(uv,2));
+    const cv=document.createElement('canvas'); cv.width=4; cv.height=H; const ctx=cv.getContext('2d');
+    let lr=255,lg=255,lb=255;
+    for(let b=0;b<H;b++){
+      let r,gg,bb;
+      if(num[b]>0){ r=sum[b*3]/num[b]*255; gg=sum[b*3+1]/num[b]*255; bb=sum[b*3+2]/num[b]*255; lr=r;lg=gg;lb=bb; }
+      else { r=lr; gg=lg; bb=lb; }
+      ctx.fillStyle='rgb('+Math.round(r)+','+Math.round(gg)+','+Math.round(bb)+')';
+      ctx.fillRect(0, H-1-b, 4, 1);
+    }
+    const tex=new THREE.CanvasTexture(cv); tex.needsUpdate=true;
+    return tex;
+  }
+  // A simple neon bouquet sized to sit in the vase opening (separate solid-colored
+  // meshes so each flower keeps its color even in single-sided USDZ).
+  function buildFlowers(topY, rad){
+    const grp=new THREE.Group();
+    const rOpen=rad*0.6, cols=[0xff0096,0x9D4EDD,0x00d4ff];
+    const stemMat=new THREE.MeshStandardMaterial({color:0x4a3a2a, roughness:0.85, side:THREE.DoubleSide});
+    const N=7;
+    for(let i=0;i<N;i++){
+      const ang=(i/N)*Math.PI*2 + (i%2?0.5:0);
+      const sp=rOpen*(0.25+0.6*((i*7%5)/5));
+      const tipY=topY+rad*(1.0+0.7*((i*3%4)/4));
+      const x0=Math.cos(ang)*rOpen*0.2, z0=Math.sin(ang)*rOpen*0.2, y0=topY-rad*0.15;
+      const x1=Math.cos(ang)*sp, z1=Math.sin(ang)*sp, y1=tipY;
+      const dir=new THREE.Vector3(x1-x0,y1-y0,z1-z0); const len=dir.length();
+      const stem=new THREE.Mesh(new THREE.CylinderGeometry(rad*0.025, rad*0.03, len, 6), stemMat);
+      stem.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);
+      stem.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.normalize());
+      grp.add(stem);
+      const blo=new THREE.Mesh(new THREE.IcosahedronGeometry(rad*0.2,0),
+        new THREE.MeshStandardMaterial({color:cols[i%3], roughness:0.5}));
+      blo.position.set(x1,y1,z1); grp.add(blo);
+    }
+    return grp;
+  }
   function makeExportMesh(opts){
     let g = opts.geometry.clone();
-    // Orientation fix: AR is Y-up; STLs are often Z-up. rotXDeg/etc. re-orient per model.
     const d2r = Math.PI/180;
-    if (opts.rotXDeg) g.rotateX(opts.rotXDeg*d2r);
-    if (opts.rotYDeg) g.rotateY(opts.rotYDeg*d2r);
-    if (opts.rotZDeg) g.rotateZ(opts.rotZDeg*d2r);
+    if (opts.rotXDeg || opts.rotYDeg || opts.rotZDeg){
+      if (opts.rotXDeg) g.rotateX(opts.rotXDeg*d2r);
+      if (opts.rotYDeg) g.rotateY(opts.rotYDeg*d2r);
+      if (opts.rotZDeg) g.rotateZ(opts.rotZDeg*d2r);
+    } else if (opts.placement !== 'wall' && opts.autoOrient !== false){
+      autoOrientDown(g);
+    }
+    const map = (opts.multiColor !== false) ? applyMultiColor(g) : null;
     g.computeVertexNormals();
     g = solidify(g);
     g.center();
     g.computeBoundingBox();
     const sz = new THREE.Vector3(); g.boundingBox.getSize(sz);
-    const h = sz.y || sz.x || 1;
-    const scale = (opts.realHeightM || 0.15) / h;
+    const scale = (opts.realHeightM || 0.15) / (sz.y || sz.x || 1);
     g.scale(scale, scale, scale);
     g.computeBoundingBox();
     if (opts.placement !== 'wall') g.translate(0, -g.boundingBox.min.y, 0); // sit on floor
     const mat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(opts.colorHex || '#ff0096'),
+      color: map ? 0xffffff : new THREE.Color(opts.colorHex || '#ff0096'),
+      map: map || null,
       metalness: 0.05, roughness: 0.55, side: THREE.DoubleSide
     });
     return new THREE.Mesh(g, mat);
@@ -4498,20 +4573,33 @@
   }
   async function view(opts){
     const overlay = spinner('// building 3D model…');
-    try {
-      await loadLibs();
+    let withFlowers = false;
+    async function build(){
+      const stage = overlay.querySelector('.dfar-stage');
+      stage.innerHTML = '<div class="dfar-load">// building 3D model…</div>';
       const mesh = makeExportMesh(opts);
-      const glbBuf = await new Promise((res, rej)=>{
-        new THREE.GLTFExporter().parse(mesh, res, { binary:true }); // r128: parse(input,onDone,options)
+      let root = mesh;
+      if (withFlowers && opts.allowFlowers){
+        mesh.geometry.computeBoundingBox();
+        const bb = mesh.geometry.boundingBox;
+        root = new THREE.Group();
+        root.add(mesh);
+        root.add(buildFlowers(bb.max.y, (bb.max.x - bb.min.x)/2));
+      }
+      root.updateMatrixWorld(true);
+      const glbBuf = await new Promise((res)=>{
+        new THREE.GLTFExporter().parse(root, res, { binary:true });
       });
       const glbUrl = URL.createObjectURL(new Blob([glbBuf], {type:'model/gltf-binary'}));
       let usdzUrl = '';
       try {
-        const usdz = await new THREE.USDZExporter().parse(mesh);
+        const usdz = await new THREE.USDZExporter().parse(root);
         usdzUrl = URL.createObjectURL(new Blob([usdz], {type:'model/vnd.usdz+zip'}));
       } catch(e){ console.warn('USDZ export failed (iPhone AR off):', e); }
-      const stage = overlay.querySelector('.dfar-stage');
       const heightCm = Math.round((opts.realHeightM||0.15)*100);
+      const flowerBtn = opts.allowFlowers
+        ? '<button class="dfar-toggle" id="dfar-flowers">'+(withFlowers?'🌸 Flowers: ON':'🌸 Add flowers')+'</button>'
+        : '';
       stage.innerHTML =
         '<model-viewer src="'+glbUrl+'"'+ (usdzUrl?(' ios-src="'+usdzUrl+'"'):'') +
         ' alt="'+(opts.name||'Dragonfruit model')+'"'+
@@ -4520,8 +4608,13 @@
         ' style="width:100%;height:100%;background:#0a0a14;">'+
           '<button slot="ar-button" class="dfar-arbtn">📱 VIEW IN YOUR ROOM</button>'+
         '</model-viewer>'+
+        flowerBtn +
         '<div class="dfar-cap">// real size ≈ '+heightCm+'cm tall · tap the button on your phone</div>';
-    } catch(err){
+      const fb = document.getElementById('dfar-flowers');
+      if (fb) fb.onclick = ()=>{ withFlowers = !withFlowers; build(); };
+    }
+    try { await loadLibs(); await build(); }
+    catch(err){
       console.error(err);
       overlay.querySelector('.dfar-stage').innerHTML =
         '<div class="dfar-load">// AR failed to load.<br>Check your connection and try again.</div>';
@@ -4548,6 +4641,9 @@
   box-shadow:0 4px 20px rgba(255,0,150,.5);white-space:nowrap;}
 #dfar-overlay .dfar-cap{position:absolute;bottom:14px;left:0;right:0;text-align:center;
   color:#9D4EDD;font-size:11px;pointer-events:none;}
+#dfar-overlay .dfar-toggle{position:absolute;top:12px;left:12px;z-index:5;background:rgba(157,78,221,.18);
+  color:#00d4ff;border:1px solid #9D4EDD;padding:8px 12px;border-radius:20px;cursor:pointer;
+  font-family:'Space Mono',monospace;font-size:12px;}
 </style>
 </body>
 </html>
