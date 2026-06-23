@@ -4100,6 +4100,11 @@
             
             try {
                 const geometry = loader.parse(arrayBuffer);
+                // Orient at load so the 3D VIEWER matches AR (Y-up, printed base down).
+                try {
+                    if (AR_ROT_X[currentModelFile]) geometry.rotateX(AR_ROT_X[currentModelFile]*Math.PI/180);
+                    else if (window.DF_AR && DF_AR.autoOrient) DF_AR.autoOrient(geometry);
+                } catch(e){ console.warn('orient skipped', e); }
                 geometry.computeVertexNormals();
 
                 if (model3d) {
@@ -4187,15 +4192,7 @@
             document.getElementById('autoRotateBtn').classList.toggle('active');
         }
 
-        // Approx real-world heights (metres) per product, for life-size AR placement.
-        const AR_REAL_HEIGHT_M = {
-            '3dbenchy.stl': 0.048,
-            'cat-stand.stl': 0.10,
-            'hexagon-fidget.stl': 0.07,
-            'infinity-cube.stl': 0.06,
-            'dragon.stl': 0.12,
-            'spiral-stacked-planter.stl': 0.15
-        };
+        // (AR size now comes from each STL's own mm dimensions — true life size, no guesses.)
         // Per-model AR orientation override (degrees). Normally auto-orient (largest flat
         // face -> floor) handles this; set a value here only if a model looks wrong.
         // Benchy: its biggest flat face is the cabin roof, not the hull, so auto-orient
@@ -4211,8 +4208,7 @@
             DF_AR.view({
                 geometry: model3d.geometry,
                 colorHex: '#' + model3d.material.color.getHexString(),
-                realHeightM: AR_REAL_HEIGHT_M[currentModelFile] || 0.10,
-                rotXDeg: AR_ROT_X[currentModelFile] || 0,
+                autoOrient: false,   // geometry was already oriented at load
                 placement: AR_WALL[currentModelFile] ? 'wall' : 'floor',
                 name: currentModelName || 'Dragonfruit 3D model'
             });
@@ -4571,10 +4567,7 @@
     g.computeVertexNormals();
     g = solidify(g);
     g.center();
-    g.computeBoundingBox();
-    const sz = new THREE.Vector3(); g.boundingBox.getSize(sz);
-    const scale = (opts.realHeightM || 0.15) / (sz.y || sz.x || 1);
-    g.scale(scale, scale, scale);
+    g.scale(0.001, 0.001, 0.001);   // geometry is in millimetres -> metres = true life size
     g.computeBoundingBox();
     if (opts.placement !== 'wall') g.translate(0, -g.boundingBox.min.y, 0); // sit on floor
     const mat = new THREE.MeshStandardMaterial({
@@ -4622,7 +4615,9 @@
         const usdz = await new THREE.USDZExporter().parse(root);
         usdzUrl = URL.createObjectURL(new Blob([usdz], {type:'model/vnd.usdz+zip'}));
       } catch(e){ console.warn('USDZ export failed (iPhone AR off):', e); }
-      const heightCm = Math.round((opts.realHeightM||0.15)*100);
+      mesh.geometry.computeBoundingBox();
+      const _sz = new THREE.Vector3(); mesh.geometry.boundingBox.getSize(_sz);
+      const sizeCm = Math.round(Math.max(_sz.x,_sz.y,_sz.z)*100);
       const flowerBtn = opts.allowFlowers
         ? '<button class="dfar-toggle" id="dfar-flowers">'+(withFlowers?'🌸 Flowers: ON':'🌸 Add flowers')+'</button>'
         : '';
@@ -4635,7 +4630,7 @@
           '<button slot="ar-button" class="dfar-arbtn">📱 VIEW IN YOUR ROOM</button>'+
         '</model-viewer>'+
         flowerBtn +
-        '<div class="dfar-cap">// real size ≈ '+heightCm+'cm tall · tap the button on your phone</div>';
+        '<div class="dfar-cap">// real size ≈ '+sizeCm+'cm · tap the button on your phone</div>';
       const fb = document.getElementById('dfar-flowers');
       if (fb) fb.onclick = ()=>{ withFlowers = !withFlowers; build(); };
     }
@@ -4646,7 +4641,7 @@
         '<div class="dfar-load">// AR failed to load.<br>Check your connection and try again.</div>';
     }
   }
-  window.DF_AR = { view };
+  window.DF_AR = { view, autoOrient: autoOrientDown };
 })();
 </script>
 <style>
