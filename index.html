@@ -4100,10 +4100,16 @@
             
             try {
                 const geometry = loader.parse(arrayBuffer);
-                // Orient at load so the 3D VIEWER matches AR (Y-up, printed base down).
+                // Orient at load so the 3D VIEWER matches AR. Default = auto-orient
+                // (largest flat face down). AR_ORIENT overrides: {rotX/Y/Z} or {raw:true}.
                 try {
-                    if (AR_ROT_X[currentModelFile]) geometry.rotateX(AR_ROT_X[currentModelFile]*Math.PI/180);
-                    else if (window.DF_AR && DF_AR.autoOrient) DF_AR.autoOrient(geometry);
+                    const _o = AR_ORIENT[currentModelFile];
+                    if (_o && _o.raw) { /* keep the STL's own pose */ }
+                    else if (_o && (_o.rotX || _o.rotY || _o.rotZ)) {
+                        if (_o.rotX) geometry.rotateX(_o.rotX*Math.PI/180);
+                        if (_o.rotY) geometry.rotateY(_o.rotY*Math.PI/180);
+                        if (_o.rotZ) geometry.rotateZ(_o.rotZ*Math.PI/180);
+                    } else if (window.DF_AR && DF_AR.autoOrient) DF_AR.autoOrient(geometry);
                 } catch(e){ console.warn('orient skipped', e); }
                 geometry.computeVertexNormals();
 
@@ -4204,11 +4210,13 @@
         }
 
         // (AR size now comes from each STL's own mm dimensions — true life size, no guesses.)
-        // Per-model AR orientation override (degrees). Normally auto-orient (largest flat
-        // face -> floor) handles this; set a value here only if a model looks wrong.
-        // Benchy: its biggest flat face is the cabin roof, not the hull, so auto-orient
-        // flips it — pin it to -90 (verified upright).
-        const AR_ROT_X = { '3dbenchy.stl': -90 };
+        // Per-model orientation. Default = auto-orient (largest flat face -> floor).
+        // Overrides: {rotX/rotY/rotZ} for a fixed rotation, or {raw:true} to keep the
+        // STL's own pose. Applied in BOTH the 3D viewer and AR so they always match.
+        const AR_ORIENT = {
+            '3dbenchy.stl': { rotX: -90 },   // benchy's biggest flat face is the cabin roof; auto-orient flips it
+            'dragon.stl':   { raw: true }    // articulated dragon looks best in its own pose, not laid flat
+        };
         // Items that should stick to a WALL in AR instead of the floor (wall art).
         const AR_WALL = {};
         function view3DInAR() {
