@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dragonfruit 3D Vase Customizer · v47 (Jun 23) · AR (DF_AR): life-size via mm->m scaling (fixed dragon being ~1m); orientation now also applied in the on-site 3D viewer (not just AR). v46: GLB+USDZ, life-size, solidify() iPhone half-render fix, multi-color strip texture, auto-orient, 🌸 flowers. v46: nicer flowers — ring of petals + colored center per blossom (was icosahedron blobs). · Patterns: Bands, Accent (rim+foot), Dip (adjustable two-tone), Rhythm (multi-width) — all height-based/AMS-friendly, clean min-Y edges. Removed Stripes + Split. Multi-color 3MF via <m:colorgroup> (Variant B — loads with color in Bambu). Fixed sawtooth "razor" band edges (color bands by face min-Y so both triangles of a lathe quad match). 3MF still geometry-only. -->
+<!-- Dragonfruit 3D Vase Customizer · v48 (Jun 23) · AR (DF_AR): FrontSide export material (solidify already adds back-faces) kills the z-fight "patchy" look on decimated STLs; 3D viewer now solidify+FrontSide too; nicer two-ring flowers. v47: life-size via mm->m scaling (fixed dragon being ~1m); orientation now also applied in the on-site 3D viewer (not just AR). v46: GLB+USDZ, life-size, solidify() iPhone half-render fix, multi-color strip texture, auto-orient, 🌸 flowers. v46: nicer flowers — ring of petals + colored center per blossom (was icosahedron blobs). · Patterns: Bands, Accent (rim+foot), Dip (adjustable two-tone), Rhythm (multi-width) — all height-based/AMS-friendly, clean min-Y edges. Removed Stripes + Split. Multi-color 3MF via <m:colorgroup> (Variant B — loads with color in Bambu). Fixed sawtooth "razor" band edges (color bands by face min-Y so both triangles of a lathe quad match). 3MF still geometry-only. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1300,7 +1300,7 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
 
 buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera(); animate();
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v47</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v48</div>
 
 <!-- ============================================================
      DRAGONFRUIT AR HELPER  (DF_AR)  — "View in your room"
@@ -1415,21 +1415,24 @@ buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera();
   // keeps its color even in single-sided USDZ (iPhone).
   function makeBlossom(r, petalColor, centerColor){
     const g=new THREE.Group();
-    const baseGeo=new THREE.SphereGeometry(1,8,6);
-    const petalMat=new THREE.MeshStandardMaterial({color:petalColor, roughness:0.5});
-    const P=5;
-    for(let k=0;k<P;k++){
-      const a=(k/P)*Math.PI*2;
-      const dirv=new THREE.Vector3(Math.cos(a)*0.85, 0.5, Math.sin(a)*0.85).normalize();
-      const petal=new THREE.Mesh(baseGeo, petalMat);
-      petal.scale.set(r*0.28, r*0.62, r*0.18);
-      petal.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dirv);
-      petal.position.copy(dirv).multiplyScalar(r*0.55);
-      g.add(petal);
+    const base=new THREE.SphereGeometry(1,10,8);
+    const pmat=new THREE.MeshStandardMaterial({color:petalColor, roughness:0.45});
+    function ring(count, tilt, sx, sy, sz, rad2, yoff, rot){
+      for(let k=0;k<count;k++){
+        const a=(k/count)*Math.PI*2 + rot;
+        const dirv=new THREE.Vector3(Math.cos(a)*Math.cos(tilt), Math.sin(tilt), Math.sin(a)*Math.cos(tilt)).normalize();
+        const p=new THREE.Mesh(base, pmat);
+        p.scale.set(sx*r, sy*r, sz*r);
+        p.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dirv);
+        p.position.copy(dirv).multiplyScalar(rad2*r); p.position.y += yoff*r;
+        g.add(p);
+      }
     }
-    const center=new THREE.Mesh(new THREE.SphereGeometry(r*0.34,10,8),
-      new THREE.MeshStandardMaterial({color:centerColor, roughness:0.4, metalness:0.1}));
-    center.position.y=r*0.12; g.add(center);
+    ring(6, 0.30, 0.34, 0.66, 0.20, 0.60, 0.04, 0.0);   // outer petals
+    ring(5, 0.65, 0.24, 0.50, 0.16, 0.42, 0.16, 0.55);  // inner petals (offset, upright)
+    const c=new THREE.Mesh(new THREE.SphereGeometry(r*0.3,10,8),
+      new THREE.MeshStandardMaterial({color:centerColor, roughness:0.35, metalness:0.15}));
+    c.position.y=r*0.2; g.add(c);
     return g;
   }
   function buildFlowers(topY, rad){
@@ -1439,24 +1442,30 @@ buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera();
       {p:0xff0096,c:0xFFD700},{p:0x9D4EDD,c:0x00d4ff},{p:0x00d4ff,c:0xff0096},
       {p:0xFF8C00,c:0xFFD700},{p:0xFF006E,c:0x00d4ff},{p:0x9D4EDD,c:0xFFD700}
     ];
-    const stemMat=new THREE.MeshStandardMaterial({color:0x5a4633, roughness:0.9, side:THREE.DoubleSide});
-    const N=6;
+    const stemMat=new THREE.MeshStandardMaterial({color:0x5a4633, roughness:0.9});
+    const N=7;
     for(let i=0;i<N;i++){
-      const ang=(i/N)*Math.PI*2 + (i%2?0.45:0);
-      const lean=rOpen*(0.35+0.5*((i*7%5)/5));
-      const stemLen=rad*(0.95+0.8*((i*3%4)/4));
-      const bx=Math.cos(ang)*rOpen*0.15, bz=Math.sin(ang)*rOpen*0.15, by=topY-rad*0.1;
+      const ang=(i/N)*Math.PI*2 + (i%2?0.4:0);
+      const lean=rOpen*(0.3+0.55*((i*7%5)/5));
+      const stemLen=rad*(0.9+0.95*((i*3%4)/4));
+      const bx=Math.cos(ang)*rOpen*0.12, bz=Math.sin(ang)*rOpen*0.12, by=topY-rad*0.1;
       const tx=Math.cos(ang)*lean, tz=Math.sin(ang)*lean, ty=topY+stemLen;
       const dir=new THREE.Vector3(tx-bx,ty-by,tz-bz); const len=dir.length(); dir.normalize();
-      const stem=new THREE.Mesh(new THREE.CylinderGeometry(rad*0.016, rad*0.028, len, 6), stemMat);
+      const stem=new THREE.Mesh(new THREE.CylinderGeometry(rad*0.013, rad*0.022, len, 6), stemMat);
       stem.position.set((bx+tx)/2,(by+ty)/2,(bz+tz)/2);
       stem.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
       grp.add(stem);
       const pal=pals[i%pals.length];
-      const head=makeBlossom(rad*0.17, pal.p, pal.c);
-      head.position.set(tx,ty,tz);
-      head.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
-      grp.add(head);
+      if(i%4===3){  // a round bud for variety
+        const bud=new THREE.Mesh(new THREE.SphereGeometry(rad*0.085,10,8),
+          new THREE.MeshStandardMaterial({color:pal.p, roughness:0.5}));
+        bud.position.set(tx,ty,tz); grp.add(bud);
+      } else {
+        const head=makeBlossom(rad*0.16, pal.p, pal.c);
+        head.position.set(tx,ty,tz);
+        head.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
+        grp.add(head);
+      }
     }
     return grp;
   }
@@ -1480,7 +1489,7 @@ buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera();
     const mat = new THREE.MeshStandardMaterial({
       color: map ? 0xffffff : new THREE.Color(opts.colorHex || '#ff0096'),
       map: map || null,
-      metalness: 0.05, roughness: 0.55, side: THREE.DoubleSide
+      metalness: 0.05, roughness: 0.55, side: THREE.FrontSide
     });
     return new THREE.Mesh(g, mat);
   }
@@ -1548,7 +1557,7 @@ buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera();
         '<div class="dfar-load">// AR failed to load.<br>Check your connection and try again.</div>';
     }
   }
-  window.DF_AR = { view, autoOrient: autoOrientDown };
+  window.DF_AR = { view, autoOrient: autoOrientDown, solidify };
 })();
 </script>
 <style>
