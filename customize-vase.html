@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dragonfruit 3D Vase Customizer · v45 (Jun 22) · AR (DF_AR): GLB+USDZ on click, life-size floor placement. solidify() back-faces fix iPhone half-render. v45: multi-color via baked vertical strip texture (shows on iPhone too) + 🌸 flowers toggle (neon bouquet) + auto-orient (largest flat face -> floor). · Patterns: Bands, Accent (rim+foot), Dip (adjustable two-tone), Rhythm (multi-width) — all height-based/AMS-friendly, clean min-Y edges. Removed Stripes + Split. Multi-color 3MF via <m:colorgroup> (Variant B — loads with color in Bambu). Fixed sawtooth "razor" band edges (color bands by face min-Y so both triangles of a lathe quad match). 3MF still geometry-only. -->
+<!-- Dragonfruit 3D Vase Customizer · v46 (Jun 23) · AR (DF_AR): GLB+USDZ, life-size, solidify() iPhone half-render fix, multi-color strip texture, auto-orient, 🌸 flowers. v46: nicer flowers — ring of petals + colored center per blossom (was icosahedron blobs). · Patterns: Bands, Accent (rim+foot), Dip (adjustable two-tone), Rhythm (multi-width) — all height-based/AMS-friendly, clean min-Y edges. Removed Stripes + Split. Multi-color 3MF via <m:colorgroup> (Variant B — loads with color in Bambu). Fixed sawtooth "razor" band edges (color bands by face min-Y so both triangles of a lathe quad match). 3MF still geometry-only. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1300,7 +1300,7 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
 
 buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera(); animate();
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v45</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v46</div>
 
 <!-- ============================================================
      DRAGONFRUIT AR HELPER  (DF_AR)  — "View in your room"
@@ -1410,27 +1410,53 @@ buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera();
     const tex=new THREE.CanvasTexture(cv); tex.needsUpdate=true;
     return tex;
   }
-  // A simple neon bouquet sized to sit in the vase opening (separate solid-colored
-  // meshes so each flower keeps its color even in single-sided USDZ).
+  // A neon bouquet sized to sit in the vase opening. Each flower = a ring of petals
+  // around a center, on a tapered stem. Separate solid-colored meshes so every part
+  // keeps its color even in single-sided USDZ (iPhone).
+  function makeBlossom(r, petalColor, centerColor){
+    const g=new THREE.Group();
+    const baseGeo=new THREE.SphereGeometry(1,8,6);
+    const petalMat=new THREE.MeshStandardMaterial({color:petalColor, roughness:0.5});
+    const P=5;
+    for(let k=0;k<P;k++){
+      const a=(k/P)*Math.PI*2;
+      const dirv=new THREE.Vector3(Math.cos(a)*0.85, 0.5, Math.sin(a)*0.85).normalize();
+      const petal=new THREE.Mesh(baseGeo, petalMat);
+      petal.scale.set(r*0.28, r*0.62, r*0.18);
+      petal.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dirv);
+      petal.position.copy(dirv).multiplyScalar(r*0.55);
+      g.add(petal);
+    }
+    const center=new THREE.Mesh(new THREE.SphereGeometry(r*0.34,10,8),
+      new THREE.MeshStandardMaterial({color:centerColor, roughness:0.4, metalness:0.1}));
+    center.position.y=r*0.12; g.add(center);
+    return g;
+  }
   function buildFlowers(topY, rad){
     const grp=new THREE.Group();
-    const rOpen=rad*0.6, cols=[0xff0096,0x9D4EDD,0x00d4ff];
-    const stemMat=new THREE.MeshStandardMaterial({color:0x4a3a2a, roughness:0.85, side:THREE.DoubleSide});
-    const N=7;
+    const rOpen=rad*0.6;
+    const pals=[
+      {p:0xff0096,c:0xFFD700},{p:0x9D4EDD,c:0x00d4ff},{p:0x00d4ff,c:0xff0096},
+      {p:0xFF8C00,c:0xFFD700},{p:0xFF006E,c:0x00d4ff},{p:0x9D4EDD,c:0xFFD700}
+    ];
+    const stemMat=new THREE.MeshStandardMaterial({color:0x5a4633, roughness:0.9, side:THREE.DoubleSide});
+    const N=6;
     for(let i=0;i<N;i++){
-      const ang=(i/N)*Math.PI*2 + (i%2?0.5:0);
-      const sp=rOpen*(0.25+0.6*((i*7%5)/5));
-      const tipY=topY+rad*(1.0+0.7*((i*3%4)/4));
-      const x0=Math.cos(ang)*rOpen*0.2, z0=Math.sin(ang)*rOpen*0.2, y0=topY-rad*0.15;
-      const x1=Math.cos(ang)*sp, z1=Math.sin(ang)*sp, y1=tipY;
-      const dir=new THREE.Vector3(x1-x0,y1-y0,z1-z0); const len=dir.length();
-      const stem=new THREE.Mesh(new THREE.CylinderGeometry(rad*0.025, rad*0.03, len, 6), stemMat);
-      stem.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);
-      stem.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.normalize());
+      const ang=(i/N)*Math.PI*2 + (i%2?0.45:0);
+      const lean=rOpen*(0.35+0.5*((i*7%5)/5));
+      const stemLen=rad*(0.95+0.8*((i*3%4)/4));
+      const bx=Math.cos(ang)*rOpen*0.15, bz=Math.sin(ang)*rOpen*0.15, by=topY-rad*0.1;
+      const tx=Math.cos(ang)*lean, tz=Math.sin(ang)*lean, ty=topY+stemLen;
+      const dir=new THREE.Vector3(tx-bx,ty-by,tz-bz); const len=dir.length(); dir.normalize();
+      const stem=new THREE.Mesh(new THREE.CylinderGeometry(rad*0.016, rad*0.028, len, 6), stemMat);
+      stem.position.set((bx+tx)/2,(by+ty)/2,(bz+tz)/2);
+      stem.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
       grp.add(stem);
-      const blo=new THREE.Mesh(new THREE.IcosahedronGeometry(rad*0.2,0),
-        new THREE.MeshStandardMaterial({color:cols[i%3], roughness:0.5}));
-      blo.position.set(x1,y1,z1); grp.add(blo);
+      const pal=pals[i%pals.length];
+      const head=makeBlossom(rad*0.17, pal.p, pal.c);
+      head.position.set(tx,ty,tz);
+      head.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
+      grp.add(head);
     }
     return grp;
   }
