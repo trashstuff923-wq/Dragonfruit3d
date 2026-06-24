@@ -4117,26 +4117,16 @@
                     scene3d.remove(model3d);
                 }
 
-                // For DISPLAY: solidify (add reversed back-faces) and render FrontSide. This
-                // fixes the "patchy" look on decimated STLs (flipped/missing faces + z-fighting)
-                // better than DoubleSide. Falls back to DoubleSide if solidify is unavailable,
-                // so we never reintroduce the see-through/wireframe look. AR exports from the
-                // un-doubled geometry (model3d.userData.arGeometry) to stay lean.
-                let dispGeo = geometry, solidified = false;
-                try { if (window.DF_AR && DF_AR.solidify) { dispGeo = DF_AR.solidify(geometry); solidified = true; } }
-                catch(e){ console.warn('solidify skipped', e); }
-
                 const material = new THREE.MeshPhongMaterial({
                     color: 0xFFD700,
                     shininess: 60,
                     specular: 0x444444,
                     flatShading: false,
-                    side: solidified ? THREE.FrontSide : THREE.DoubleSide
+                    side: THREE.DoubleSide  // DoubleSide flips inward normals on decimated STLs -> no dark facets/slashes. Keep it.
                 });
 
-                model3d = new THREE.Mesh(dispGeo, material);
-                model3d.userData.arGeometry = geometry;   // AR uses the oriented, un-doubled geo
-                dispGeo.center();
+                model3d = new THREE.Mesh(geometry, material);
+                model3d.userData.arGeometry = geometry;   // AR uses this same oriented geometry
                 geometry.center();
 
                 const box = new THREE.Box3().setFromObject(model3d);
@@ -4228,6 +4218,7 @@
                 geometry: model3d.userData.arGeometry || model3d.geometry,
                 colorHex: '#' + model3d.material.color.getHexString(),
                 autoOrient: false,   // geometry was already oriented at load
+                solidify: false,     // solid watertight STL — no back-faces (avoids z-fight/slashes)
                 placement: AR_WALL[currentModelFile] ? 'wall' : 'floor',
                 name: currentModelName || 'Dragonfruit 3D model'
             });
@@ -4413,6 +4404,7 @@
         document.getElementById('mobilePopup').style.display = 'block';
     }
 </script>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:99999;pointer-events:none">home v49</div>
 
 <!-- ============================================================
      DRAGONFRUIT AR HELPER  (DF_AR)  — "View in your room"
@@ -4593,7 +4585,10 @@
     }
     const map = (opts.multiColor !== false) ? applyMultiColor(g) : null;
     g.computeVertexNormals();
-    g = solidify(g);
+    // solidify (add back-faces) only for OPEN shells (vases) so single-sided iPhone AR
+    // shows both walls. Solid models (STLs) skip it — doubling there causes z-fight/slashes.
+    const doSolid = opts.solidify !== false;
+    if (doSolid) g = solidify(g);
     g.center();
     g.scale(0.001, 0.001, 0.001);   // geometry is in millimetres -> metres = true life size
     g.computeBoundingBox();
@@ -4601,7 +4596,7 @@
     const mat = new THREE.MeshStandardMaterial({
       color: map ? 0xffffff : new THREE.Color(opts.colorHex || '#ff0096'),
       map: map || null,
-      metalness: 0.05, roughness: 0.55, side: THREE.FrontSide
+      metalness: 0.05, roughness: 0.55, side: doSolid ? THREE.FrontSide : THREE.DoubleSide
     });
     return new THREE.Mesh(g, mat);
   }
