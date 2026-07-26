@@ -99,9 +99,7 @@ Don't change these without asking.
 4. **quote** (id `69aeb03de9e7e80007ed42f5`)
 
 ## Known bugs / pending work
-1. **Orders form fires BEFORE Stripe checkout completes** — in `index.html` around line 3661, `submitOrderToNetlify()` runs immediately followed by `window.location.href = url`. Result: every click of "Buy" logs an order even if the customer never pays. ~17 orders in the form so far, probably half are fake/duplicates. **Fix options:**
-   - (A) Move `submitOrderToNetlify()` inside the `success === 'true'` handler on the thank-you page
-   - (B) Build a Stripe webhook → Netlify Function to log only paid orders (proper but more work)
+1. ~~**Orders form fires BEFORE Stripe checkout completes**~~ — **FIXED (2026-06-29).** `submitOrderToNetlify()` no longer runs before the redirect. The cart is saved to `localStorage` (`dragonfruit3d_pending_cart`) before redirecting, and on return the `success === 'true'` handler parses that saved cart and calls `submitOrderToNetlify(savedCart)` — so only PAID orders get logged. `submitOrderToNetlify(orderCart)` now takes an explicit cart (live cart is already cleared on return) and no-ops on an empty cart. (Old fake/duplicate entries already in the Netlify `orders` form are historical and can be ignored/cleared in the dashboard.) A Stripe webhook (option B) would be even more robust but isn't needed for this volume.
 2. **Customer contact info missing on orders** — all submissions show "Guest / No email / No phone" because checkout doesn't collect them. Stripe Payment Links can collect email if configured in Stripe Dashboard.
 3. **Cat Phone Stand model attribution** — already in credits.html under "Models from MakerWorld community designers": "Cat Phone Stand · Designed by Jaroslaw on MakerWorld"
 

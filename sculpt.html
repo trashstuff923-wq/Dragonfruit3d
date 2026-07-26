@@ -955,7 +955,7 @@ document.getElementById('downloadBtn').addEventListener('click', async ()=>{
 initClay(); initMeshes(); resizeRenderer(); updateMesh(); buildColorGrid(); setStep('hole'); updateCamera(); animate();
 document.getElementById('brushVal').textContent=(BRUSH*(H/(N-1))/10).toFixed(1)+'cm';
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">sculpt v22</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">sculpt v23</div>
 
 <!-- ============================================================
      DRAGONFRUIT AR HELPER  (DF_AR)  — "View in your room"
@@ -967,6 +967,7 @@ document.getElementById('brushVal').textContent=(BRUSH*(H/(N-1))/10).toFixed(1)+
   const CDN = {
     fflate: 'https://unpkg.com/fflate@0.6.9/umd/index.js',
     gltf:   'https://unpkg.com/three@0.128.0/examples/js/exporters/GLTFExporter.js',
+    gltfL:  'https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js',
     usdz:   'https://unpkg.com/three@0.128.0/examples/js/exporters/USDZExporter.js',
     mv:     'https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js'
   };
@@ -984,6 +985,7 @@ document.getElementById('brushVal').textContent=(BRUSH*(H/(N-1))/10).toFixed(1)+
     libsP = (async ()=>{
       if (!window.fflate) await loadScript(CDN.fflate);
       if (!THREE.GLTFExporter) await loadScript(CDN.gltf);
+      if (!THREE.GLTFLoader) await loadScript(CDN.gltfL);
       if (!THREE.USDZExporter) await loadScript(CDN.usdz);
       if (!customElements.get('model-viewer')) await loadScript(CDN.mv, true);
     })();
@@ -1065,63 +1067,129 @@ document.getElementById('brushVal').textContent=(BRUSH*(H/(N-1))/10).toFixed(1)+
     const tex=new THREE.CanvasTexture(cv); tex.needsUpdate=true;
     return tex;
   }
-  // A neon bouquet sized to sit in the vase opening. Each flower = a ring of petals
-  // around a center, on a tapered stem. Separate solid-colored meshes so every part
-  // keeps its color even in single-sided USDZ (iPhone).
-  function makeBlossom(r, petalColor, centerColor){
+  // ---- Realistic neon bouquet -------------------------------------------------
+  // Flowers are built from CUPPED, CURVED petals (not spheres) layered in rings like
+  // a real rose / dahlia. Each petal is "two-faced" (front + reversed back winding)
+  // so it stays visible in single-sided USDZ on iPhone AR. Brand neon palette only;
+  // stems neutral brown, accent leaves cyan (never green).
+  let _petalGeo=null, _leafGeo=null;
+  function twoFaced(g){            // duplicate triangles with reversed winding -> visible both sides
+    const idx=g.getIndex().array, n=idx.length, merged=new Array(n*2);
+    for(let i=0;i<n;i++) merged[i]=idx[i];
+    for(let i=0;i<n;i+=3){ merged[n+i]=idx[i]; merged[n+i+1]=idx[i+2]; merged[n+i+2]=idx[i+1]; }
+    g.setIndex(merged); g.computeVertexNormals(); return g;
+  }
+  function makePetal(wide, curl){  // unit petal along +Y, cupped across + curled forward in +Z
+    const W=6,H=8,pos=[],idx=[];
+    for(let j=0;j<=H;j++){
+      const v=j/H;
+      const w=Math.sin(Math.pow(v,0.7)*Math.PI*0.92)*wide*(1-0.25*v);
+      const fold=Math.pow(v,1.4)*curl;
+      for(let i=0;i<=W;i++){
+        const u=i/W*2-1;
+        pos.push(u*w, v, fold*(1-u*u)*0.7 + u*u*w*0.5);
+      }
+    }
+    for(let j=0;j<H;j++)for(let i=0;i<W;i++){
+      const a=j*(W+1)+i,b=a+1,c=a+W+1,d=c+1;
+      idx.push(a,c,b,b,c,d);
+    }
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    g.setIndex(idx);
+    return twoFaced(g);
+  }
+  function petalGeo(){ return _petalGeo||(_petalGeo=makePetal(0.42,0.6)); }
+  function leafGeo(){  return _leafGeo ||(_leafGeo =makePetal(0.32,0.18)); }
+
+  function makeBlossom(r, petalColor, centerColor, type){
     const g=new THREE.Group();
-    const base=new THREE.SphereGeometry(1,10,8);
-    const pmat=new THREE.MeshStandardMaterial({color:petalColor, roughness:0.45});
-    function ring(count, tilt, sx, sy, sz, rad2, yoff, rot){
-      for(let k=0;k<count;k++){
-        const a=(k/count)*Math.PI*2 + rot;
-        const dirv=new THREE.Vector3(Math.cos(a)*Math.cos(tilt), Math.sin(tilt), Math.sin(a)*Math.cos(tilt)).normalize();
-        const p=new THREE.Mesh(base, pmat);
-        p.scale.set(sx*r, sy*r, sz*r);
-        p.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dirv);
-        p.position.copy(dirv).multiplyScalar(rad2*r); p.position.y += yoff*r;
+    const pmat=new THREE.MeshStandardMaterial({color:petalColor,roughness:0.5,metalness:0.05,side:THREE.DoubleSide});
+    const geo=petalGeo();
+    function ring(n, scale, tiltV, rad2, yBase, phase){
+      for(let k=0;k<n;k++){
+        const a=(k/n)*Math.PI*2+phase;
+        const dir=new THREE.Vector3(Math.sin(tiltV)*Math.cos(a),Math.cos(tiltV),Math.sin(tiltV)*Math.sin(a));
+        const p=new THREE.Mesh(geo,pmat);
+        p.scale.setScalar(scale*r);
+        p.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+        p.position.set(Math.cos(a)*rad2*r, yBase*r, Math.sin(a)*rad2*r);
         g.add(p);
       }
     }
-    ring(6, 0.30, 0.34, 0.66, 0.20, 0.60, 0.04, 0.0);   // outer petals
-    ring(5, 0.65, 0.24, 0.50, 0.16, 0.42, 0.16, 0.55);  // inner petals (offset, upright)
-    const c=new THREE.Mesh(new THREE.SphereGeometry(r*0.3,10,8),
-      new THREE.MeshStandardMaterial({color:centerColor, roughness:0.35, metalness:0.15}));
-    c.position.y=r*0.2; g.add(c);
+    if(type==='daisy'){
+      ring(13,1.05,1.15,0.18,0.05,0.0);            // flat ring of many slim petals
+      const dome=new THREE.Mesh(new THREE.SphereGeometry(r*0.34,12,10),
+        new THREE.MeshStandardMaterial({color:centerColor,roughness:0.4,metalness:0.2}));
+      dome.scale.y=0.6; dome.position.y=r*0.12; g.add(dome);
+    } else if(type==='tulip'){
+      ring(3,1.25,0.5,0.10,0.0,0.0);               // 3 cupped petals, fairly closed
+      ring(3,1.10,0.42,0.07,0.05,Math.PI/3);
+    } else {                                        // rose: tight overlapping layers
+      ring(1,0.55,0.10,0.00,0.45,0.0);             // furled center bud
+      ring(5,0.72,0.95,0.10,0.30,0.4);
+      ring(7,0.90,0.70,0.24,0.16,0.9);
+      ring(9,1.05,0.45,0.40,0.04,1.4);
+      const c=new THREE.Mesh(new THREE.SphereGeometry(r*0.13,8,6),
+        new THREE.MeshStandardMaterial({color:centerColor,roughness:0.35,metalness:0.3}));
+      c.position.y=r*0.5; g.add(c);
+    }
     return g;
   }
-  function buildFlowers(topY, rad){
+
+  // Real Coreopsis flower model (CGTrader, nvnwijesinghe). Loaded once + cached.
+  let _flowerP=null;
+  function loadFlowerModel(){
+    if(_flowerP) return _flowerP;
+    _flowerP=new Promise((res,rej)=>{
+      new THREE.GLTFLoader().load('coreopsis.glb', g=>res(g.scene), undefined, rej);
+    });
+    return _flowerP;
+  }
+  // recolor any green stem/leaf material to brand cyan (no green allowed)
+  function debrand(mesh){
+    const mats=Array.isArray(mesh.material)?mesh.material:[mesh.material];
+    const out=mats.map(m=>{
+      const mm=m.clone(); const nm=(m.name||'').toLowerCase(); const c=mm.color;
+      const greenish = nm.includes('green')||nm.includes('leef')||nm.includes('leaf')
+        || (c && c.g>c.r*1.25 && c.g>c.b*1.25);
+      if(greenish){ mm.map=null; mm.color=new THREE.Color(0x00d4ff); mm.needsUpdate=true; }
+      return mm;
+    });
+    mesh.material = Array.isArray(mesh.material)?out:out[0];
+  }
+  // Build a bouquet from the real model. Each top-level child is a WHOLE plant
+  // (white / yellow / blue, with stems + leaves), so clone whole plants — not parts.
+  async function buildFlowers(topY, rad){
     const grp=new THREE.Group();
-    const rOpen=rad*0.6;
-    const pals=[
-      {p:0xff0096,c:0xFFD700},{p:0x9D4EDD,c:0x00d4ff},{p:0x00d4ff,c:0xff0096},
-      {p:0xFF8C00,c:0xFFD700},{p:0xFF006E,c:0x00d4ff},{p:0x9D4EDD,c:0xFFD700}
+    let src;
+    try { src=await loadFlowerModel(); }
+    catch(e){ console.warn('flower model failed to load:', e); return grp; }
+    const plants=src.children.filter(c=>{ let m=false; c.traverse(o=>{ if(o.isMesh) m=true; }); return m; });
+    if(!plants.length) return grp;
+    const targetH=rad*4.5;                        // bouquet height ~4.5× opening radius
+    const place=[                                 // {plant index, angle, scale, spread}
+      {i:1,a:0.0, s:1.00,r:0.00},
+      {i:0,a:2.1, s:0.82,r:0.40},
+      {i:2,a:4.2, s:0.90,r:0.40},
+      {i:1,a:1.1, s:0.68,r:0.58},
+      {i:2,a:3.4, s:0.72,r:0.58},
     ];
-    const stemMat=new THREE.MeshStandardMaterial({color:0x5a4633, roughness:0.9});
-    const N=7;
-    for(let i=0;i<N;i++){
-      const ang=(i/N)*Math.PI*2 + (i%2?0.4:0);
-      const lean=rOpen*(0.3+0.55*((i*7%5)/5));
-      const stemLen=rad*(0.9+0.95*((i*3%4)/4));
-      const bx=Math.cos(ang)*rOpen*0.12, bz=Math.sin(ang)*rOpen*0.12, by=topY-rad*0.1;
-      const tx=Math.cos(ang)*lean, tz=Math.sin(ang)*lean, ty=topY+stemLen;
-      const dir=new THREE.Vector3(tx-bx,ty-by,tz-bz); const len=dir.length(); dir.normalize();
-      const stem=new THREE.Mesh(new THREE.CylinderGeometry(rad*0.013, rad*0.022, len, 6), stemMat);
-      stem.position.set((bx+tx)/2,(by+ty)/2,(bz+tz)/2);
-      stem.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
-      grp.add(stem);
-      const pal=pals[i%pals.length];
-      if(i%4===3){  // a round bud for variety
-        const bud=new THREE.Mesh(new THREE.SphereGeometry(rad*0.085,10,8),
-          new THREE.MeshStandardMaterial({color:pal.p, roughness:0.5}));
-        bud.position.set(tx,ty,tz); grp.add(bud);
-      } else {
-        const head=makeBlossom(rad*0.16, pal.p, pal.c);
-        head.position.set(tx,ty,tz);
-        head.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
-        grp.add(head);
-      }
-    }
+    place.forEach(p=>{
+      const plant=plants[p.i%plants.length].clone(true);
+      plant.traverse(o=>{ if(o.isMesh) debrand(o); });
+      const box=new THREE.Box3().setFromObject(plant);
+      const size=new THREE.Vector3(); box.getSize(size);
+      const ctr=new THREE.Vector3(); box.getCenter(ctr);
+      plant.position.x -= ctr.x; plant.position.z -= ctr.z; plant.position.y -= box.min.y; // center XZ, base to 0
+      const sc=(targetH*p.s)/(size.y||1);
+      const holder=new THREE.Group();
+      holder.add(plant);
+      holder.scale.setScalar(sc);
+      holder.rotation.y=p.a;
+      holder.position.set(Math.cos(p.a)*rad*p.r, topY-rad*0.15, Math.sin(p.a)*rad*p.r);
+      grp.add(holder);
+    });
     return grp;
   }
   function makeExportMesh(opts){
@@ -1177,7 +1245,7 @@ document.getElementById('brushVal').textContent=(BRUSH*(H/(N-1))/10).toFixed(1)+
         const bb = mesh.geometry.boundingBox;
         root = new THREE.Group();
         root.add(mesh);
-        root.add(buildFlowers(bb.max.y, (bb.max.x - bb.min.x)/2));
+        root.add(await buildFlowers(bb.max.y, (bb.max.x - bb.min.x)/2));
       }
       root.updateMatrixWorld(true);
       const glbBuf = await new Promise((res)=>{
