@@ -4126,10 +4126,10 @@
 
                 const material = new THREE.MeshPhongMaterial({
                     color: 0xFFD700,
-                    shininess: 60,
-                    specular: 0x444444,
-                    flatShading: false,
-                    side: THREE.DoubleSide  // DoubleSide flips inward normals on decimated STLs -> no dark facets/slashes. Keep it.
+                    shininess: 12,          // low + weak specular so the cyan fill light doesn't
+                    specular: 0x111111,     // streak thin bright lines across the low-poly edges
+                    flatShading: true,      // per-facet shading: decimated STL no longer looks blotchy/patchy
+                    side: THREE.DoubleSide  // keep DoubleSide so inward-facing normals don't render dark
                 });
 
                 model3d = new THREE.Mesh(geometry, material);
@@ -4411,7 +4411,7 @@
         document.getElementById('mobilePopup').style.display = 'block';
     }
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:99999;pointer-events:none">home v51</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:99999;pointer-events:none">home v52</div>
 
 <!-- ============================================================
      DRAGONFRUIT AR HELPER  (DF_AR)  — "View in your room"
