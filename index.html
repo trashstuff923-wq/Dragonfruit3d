@@ -3888,7 +3888,10 @@
             scene3d = new THREE.Scene();
             scene3d.background = new THREE.Color(0x050813);
 
-            camera3d = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            // near/far tightened to fit the model (zoom is clamped to 5..30 units, model ~5 units).
+            // The old 0.1..1000 range gave awful depth precision, so Benchy's close double-wall
+            // hull surfaces z-fought into blotches + thin flickering lines on some GPUs. 1..100 fixes it.
+            camera3d = new THREE.PerspectiveCamera(45, width / height, 1, 100);
             camera3d.position.set(0, 10, 15);
 
             renderer3d = new THREE.WebGLRenderer({ antialias: true });
@@ -4411,7 +4414,7 @@
         document.getElementById('mobilePopup').style.display = 'block';
     }
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:99999;pointer-events:none">home v52</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:99999;pointer-events:none">home v53</div>
 
 <!-- ============================================================
      DRAGONFRUIT AR HELPER  (DF_AR)  — "View in your room"
