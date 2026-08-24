@@ -298,9 +298,12 @@ const COLORS = [
 ];
 
 const COST = {
-  filamentPerGram: 0.05, printRateGramsPerHr: 15, machineHourly: 2,
-  brimGrams: 2, purgeGramsPerSwap: 1.5, purgeSwapsPerCm: 1.5,
-  failureRate: 0.05, markup: 1.4, setupFee: 3, minOrder: 12,
+  // Calibrated against a real print (Aug 2026): a 12.6cm wave vase = 78.8g in 2h54m
+  // (=27 g/hr, not 15) and only ~5.8g colour-change purge (not ~28g). The old numbers
+  // over-estimated time ~2x and purge ~5x, which pushed a hand-sized vase up to ~$54.
+  filamentPerGram: 0.05, printRateGramsPerHr: 27, machineHourly: 2,
+  brimGrams: 2, purgeGramsPerSwap: 1.5, purgeSwapsPerCm: 0.5,
+  failureRate: 0.05, markup: 1.2, setupFee: 2, minOrder: 8,
 };
 
 let state = { 
@@ -712,7 +715,7 @@ function updatePrice(){
     const purgeGrams = swaps * COST.purgeGramsPerSwap;
     purgeCost = purgeGrams * COST.filamentPerGram +
                 (purgeGrams / COST.printRateGramsPerHr * COST.machineHourly) +
-                (swapCount > 0 ? 3 : 0);
+                (swapCount > 0 ? 1 : 0);
   }
   
   let colorSur = COLORS[state.colorIdx].surcharge;
@@ -1300,7 +1303,7 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
 
 buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera(); animate();
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v50</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v51</div>
 
 <!-- ============================================================
      DRAGONFRUIT AR HELPER  (DF_AR)  — "View in your room"
