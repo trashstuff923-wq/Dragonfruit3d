@@ -1221,14 +1221,73 @@ function build3MFModel(geometry, palette){
 // Build a "for-print" geometry from scratch using the current state, with slicer-friendly tweaks
 // (no cosmetic top lip, closed bottom center). Applies the same color pattern logic so per-face
 // colors match what's on screen. Returns a non-indexed BufferGeometry with `color` attribute.
+// Build a PRINTABLE, watertight, thick-walled hollow vase from per-height cross-section
+// rings. Old export was a single open wall meant for Spiral-vase mode — but multicolor
+// can't use spiral vase, so in Regular mode it produced "floating cantilever / empty
+// layer" errors. This makes a real closed solid (walls + solid base) that slices clean
+// in Regular mode at any colour count. ringFn(i,segs) -> {N, pts:[{x,z},...]} = the outer
+// cross-section at ring i. Verified watertight (every edge shared by exactly 2 faces).
+function buildThickVase(heightMM, segs, ringFn, wall, baseH){
+  const pos=[], idx=[];
+  const addv=(x,y,z)=>{ pos.push(x,y,z); return pos.length/3 - 1; };
+  const y=(i)=> (i/segs)*heightMM;
+  const rings=[]; let N=0;
+  for(let i=0;i<=segs;i++){ const r=ringFn(i,segs); N=r.N; rings.push(r.pts); }
+  let baseIdx=1; while(baseIdx<segs && y(baseIdx) < baseH) baseIdx++;   // >=1 so base is solid
+  const outer=rings.map((pts,i)=> pts.map(pt=> addv(pt.x, y(i), pt.z)));
+  const inner={};
+  for(let i=baseIdx;i<=segs;i++){
+    inner[i]=rings[i].map(pt=>{ const r=Math.hypot(pt.x,pt.z)||1e-6;
+      const s=Math.max(0,(r-wall))/r; return addv(pt.x*s, y(i), pt.z*s); });
+  }
+  const tri=(a,b,c)=> idx.push(a,b,c);
+  for(let i=0;i<segs;i++) for(let j=0;j<N;j++){ const k=(j+1)%N;   // outer wall
+    const a=outer[i][j], b=outer[i][k], c=outer[i+1][j], d=outer[i+1][k];
+    tri(a,c,d); tri(a,d,b); }
+  const cB=addv(0,0,0);                                            // bottom disc (down)
+  for(let j=0;j<N;j++){ const k=(j+1)%N; tri(cB, outer[0][k], outer[0][j]); }
+  for(let i=baseIdx;i<segs;i++) for(let j=0;j<N;j++){ const k=(j+1)%N;  // inner wall (reversed)
+    const a=inner[i][j], b=inner[i][k], c=inner[i+1][j], d=inner[i+1][k];
+    tri(a,d,c); tri(a,b,d); }
+  const cF=addv(0,y(baseIdx),0);                                   // cavity floor (up)
+  for(let j=0;j<N;j++){ const k=(j+1)%N; tri(cF, inner[baseIdx][j], inner[baseIdx][k]); }
+  const top=segs;                                                  // top rim (outer->inner)
+  for(let j=0;j<N;j++){ const k=(j+1)%N;
+    tri(outer[top][j], outer[top][k], inner[top][k]);
+    tri(outer[top][j], inner[top][k], inner[top][j]); }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+// Radius profile for the pottery style (factored so print + preview stay in sync).
+function potteryRadius(t, p){
+  const bW=p.bellyWidth*10, nW=p.neckWidth*10, baW=p.baseWidth*10;
+  const neckPos=(p.neckPos!=null)?p.neckPos:1;
+  if(t===0) return baW/2;
+  if(t<p.bellyPos){ const lt=t/p.bellyPos, e=1-Math.pow(1-lt,2); return baW/2+(bW/2-baW/2)*e; }
+  if(t<neckPos){ const span=Math.max(1e-4,neckPos-p.bellyPos), lt=(t-p.bellyPos)/span, e=Math.pow(lt,1.5); return bW/2+(nW/2-bW/2)*e; }
+  return nW/2;
+}
+function ringOf(N, radiusFn, angleOff){                            // helper: N points on a ring
+  const pts=[]; for(let j=0;j<N;j++){ const a=2*Math.PI*j/N+(angleOff||0); const r=radiusFn(a); pts.push({x:Math.cos(a)*r, z:Math.sin(a)*r}); } return {N,pts};
+}
 function buildPrintGeometry(){
   const p = scaledP();
+  const WALL = 1.6, BASE_H = 4;      // 1.6mm walls, 4mm solid base
   let geo;
-  switch(state.style){
-    case 'pottery': geo = buildPottery(p, /*forPrint*/true); break;
-    case 'twisted': geo = buildTwistedPoly(p); break;       // already clean (no lip, closed bottom disc)
-    case 'wave':    geo = buildWave(p); break;
-    case 'ribbed':  geo = buildRibbed(p); break;
+  if (state.style === 'pottery'){
+    const h=p.height*10, N=stripeRadial(96);
+    geo = buildThickVase(h, 80, (i,segs)=> ringOf(N, ()=> potteryRadius(i/segs, p)), WALL, BASE_H);
+  } else if (state.style === 'wave'){
+    const h=p.height*10, rad=p.radius*10, amp=p.amplitude*10, N=stripeRadial(96);
+    geo = buildThickVase(h, 80, (i,segs)=>{ const t=i/segs, r=rad+Math.sin(t*Math.PI*p.waves)*amp; return ringOf(N, ()=> r); }, WALL, BASE_H);
+  } else if (state.style === 'ribbed'){
+    const h=p.height*10, rad=p.radius*10, dep=p.depth*10, N=stripeRadial(Math.max(48,Math.round(p.ribs)*6));
+    geo = buildThickVase(h, 60, (i,segs)=> ringOf(N, (a)=> rad+(Math.cos(a*Math.round(p.ribs))*.5+.5)*dep), WALL, BASE_H);
+  } else { // twisted — polygon cross-section (N = sides), rotating with height
+    const sides=Math.round(p.sides), h=p.height*10, rad=p.radius*10, segs=Math.max(40,Math.round(h/4));
+    geo = buildThickVase(h, segs, (i)=>{ const t=i/segs, twist=(p.twist*Math.PI/180)*t, taper=1+p.taper*t; return ringOf(sides, ()=> rad*taper, twist); }, WALL, BASE_H);
   }
   geo = applyColorPattern(geo);   // non-indexes + colors per face
   return geo;
@@ -1303,7 +1362,7 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
 
 buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera(); animate();
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v51</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v52</div>
 
 <!-- ============================================================
      DRAGONFRUIT AR HELPER  (DF_AR)  — "View in your room"
