@@ -3911,11 +3911,9 @@
             fillLight.position.set(-5, 5, -5);
             scene3d.add(fillLight);
 
-            // Grid
-            const gridHelper = new THREE.GridHelper(20, 20, 0x00ff9d, 0x0a0e27);
-            gridHelper.material.opacity = 0.2;
-            gridHelper.material.transparent = true;
-            scene3d.add(gridHelper);
+            // (Removed the floor GridHelper: its bright centre line was green (0x00ff9d,
+            // a banned brand colour) and, seen edge-on, rendered as a stray thin line
+            // shooting across the viewer that read as a "broken model" artifact.)
 
             // Controls
             setup3DControls();
@@ -4414,7 +4412,7 @@
         document.getElementById('mobilePopup').style.display = 'block';
     }
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:99999;pointer-events:none">home v53</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:99999;pointer-events:none">home v54</div>
 
 <!-- ============================================================
      DRAGONFRUIT AR HELPER  (DF_AR)  — "View in your room"
