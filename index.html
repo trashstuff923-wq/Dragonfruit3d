@@ -2620,7 +2620,7 @@
                     <button class="upload-btn" onclick="document.getElementById('stlFileInput').click()">
                         📁 CHOOSE STL FILE
                     </button>
-                    <p style="color: var(--text-dim); font-size: 0.75rem; margin-top: 1rem;">Upload 3dbenchy.stl to view in 3D</p>
+                    <p style="color: var(--text-dim); font-size: 0.75rem; margin-top: 1rem;">Upload 3dbenchy-fixed.stl to view in 3D</p>
                 </div>
 
                 <div id="viewer-controls" style="display: none;">
@@ -3060,7 +3060,7 @@
                 icon: '⛵',
                 image: '/images/benchy.png',
                 has3DView: true,
-                modelFile: '3dbenchy.stl',
+                modelFile: '3dbenchy-fixed.stl',
                 defaultColor: 'orange',
                 colors: ['yellow', 'cyan', 'purple', 'green', 'red', 'orange', 'black', 'white', 'brown', 'ice-blue', 'glow', 'gradient']
             },
@@ -3817,9 +3817,9 @@
         // Current model info
         let currentProductId = 1;
         let currentModelName = '3D Benchy';
-        let currentModelFile = '3dbenchy.stl';
+        let currentModelFile = '3dbenchy-fixed.stl';
 
-        function open3DViewerModal(productId = 1, modelName = '3D Benchy', modelFile = '3dbenchy.stl') {
+        function open3DViewerModal(productId = 1, modelName = '3D Benchy', modelFile = '3dbenchy-fixed.stl') {
             // Store current model info
             currentProductId = productId;
             currentModelName = modelName;
@@ -4070,7 +4070,7 @@
             reader.readAsArrayBuffer(file);
         }
 
-        function autoLoad3DModel(modelFile = '3dbenchy.stl') {
+        function autoLoad3DModel(modelFile = '3dbenchy-fixed.stl') {
             // Show loading message
             const uploadSection = document.getElementById('upload-section');
             if (uploadSection) {
@@ -4216,7 +4216,7 @@
         // Overrides: {rotX/rotY/rotZ} for a fixed rotation, or {raw:true} to keep the
         // STL's own pose. Applied in BOTH the 3D viewer and AR so they always match.
         const AR_ORIENT = {
-            '3dbenchy.stl': { rotX: -90 },   // benchy's biggest flat face is the cabin roof; auto-orient flips it
+            '3dbenchy-fixed.stl': { rotX: -90 },   // benchy's biggest flat face is the cabin roof; auto-orient flips it
             'dragon.stl':   { raw: true }    // articulated dragon looks best in its own pose, not laid flat
         };
         // Items that should stick to a WALL in AR instead of the floor (wall art).
@@ -4416,7 +4416,7 @@
         document.getElementById('mobilePopup').style.display = 'block';
     }
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:99999;pointer-events:none">home v55</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:99999;pointer-events:none">home v56</div>
 
 <!-- ============================================================
      DRAGONFRUIT AR HELPER  (DF_AR)  — "View in your room"
