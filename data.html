@@ -97,23 +97,55 @@
 
     <div class="content">
         <div class="stats-grid">
-            <div class="stat-card"><div class="stat-value gold" id="sOrders">—</div><div class="stat-label">Orders</div></div>
-            <div class="stat-card"><div class="stat-value pink" id="sMargin">—</div><div class="stat-label">Gross Margin</div></div>
+            <div class="stat-card"><div class="stat-value gold"  id="sOrders">—</div><div class="stat-label">Orders</div></div>
+            <div class="stat-card"><div class="stat-value cyan"  id="sItems">—</div><div class="stat-label">Items Sold</div></div>
+            <div class="stat-card"><div class="stat-value green" id="sCustomers">—</div><div class="stat-label">Customers</div></div>
+            <div class="stat-card"><div class="stat-value pink"  id="sRepeat">—</div><div class="stat-label">Repeat Buyers</div></div>
+            <div class="stat-card"><div class="stat-value cyan"  id="sAvgItems">—</div><div class="stat-label">Avg Items / Order</div></div>
+            <div class="stat-card"><div class="stat-value gold"  id="sProducts">—</div><div class="stat-label">Different Products Sold</div></div>
+
+            <div class="stat-card"><div class="stat-value pink"  id="sMargin">—</div><div class="stat-label">Gross Margin</div></div>
             <div class="stat-card"><div class="stat-value green" id="sAvgMargin">—</div><div class="stat-label">Avg Order Margin</div></div>
-            <div class="stat-card"><div class="stat-value cyan" id="sBestMargin">—</div><div class="stat-label">Best Order Margin</div></div>
-            <div class="stat-card"><div class="stat-value cyan">15</div><div class="stat-label">Products Live</div></div>
-            <div class="stat-card"><div class="stat-value gold" id="sLatest">—</div><div class="stat-label">Latest Order</div></div>
+            <div class="stat-card"><div class="stat-value cyan"  id="sBestMargin">—</div><div class="stat-label">Best Order Margin</div></div>
+            <div class="stat-card"><div class="stat-value pink"  id="sWorstMargin">—</div><div class="stat-label">Lowest Order Margin</div></div>
+
+            <div class="stat-card"><div class="stat-value gold"  id="sDays">—</div><div class="stat-label">Days Trading</div></div>
+            <div class="stat-card"><div class="stat-value green" id="sPerWeek">—</div><div class="stat-label">Orders / Week</div></div>
+            <div class="stat-card"><div class="stat-value cyan"  id="sFirst">—</div><div class="stat-label">First Order</div></div>
+            <div class="stat-card"><div class="stat-value gold"  id="sLatest">—</div><div class="stat-label">Latest Order</div></div>
+            <div class="stat-card"><div class="stat-value pink"  id="sTopProduct">—</div><div class="stat-label">Best Seller</div></div>
+            <div class="stat-card"><div class="stat-value cyan"  id="sTopColour">—</div><div class="stat-label">Top Colour</div></div>
+        </div>
+
+        <div class="section">
+            <h2>🏆 Units Sold by Product</h2>
+            <div id="productChart"><div class="loading">Loading...</div></div>
+        </div>
+
+        <div class="section">
+            <h2>🎨 Colour Popularity</h2>
+            <div id="colourChart"><div class="loading">Loading...</div></div>
+        </div>
+
+        <div class="section">
+            <h2>📅 Orders per Month</h2>
+            <div id="monthChart"><div class="loading">Loading...</div></div>
+        </div>
+
+        <div class="section">
+            <h2>🙋 Top Customers (by orders)</h2>
+            <div id="customerChart"><div class="loading">Loading...</div></div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Margin % by Order</h2>
+            <div id="revenueChart"><div class="loading">Loading...</div></div>
         </div>
 
         <div class="section">
             <h2>📦 Orders (Live from Stripe)</h2>
             <div id="ordersContainer"><div class="loading">Loading orders...</div></div>
             <p class="note">* Margins are estimates (COGS ~6% of product revenue). Dollar revenue &amp; profit are hidden — set SHOW_MONEY = true in the page script to show them again.</p>
-        </div>
-
-        <div class="section">
-            <h2>📊 Margin % by Order</h2>
-            <div id="revenueChart"><div class="loading">Loading...</div></div>
         </div>
 
         <div class="section">
@@ -125,19 +157,6 @@
                     <div class="tpu-sub" id="tpuMsg">Loading...</div>
                 </div>
             </div>
-        </div>
-
-        <div class="section">
-            <h2>🚀 Business Snapshot</h2>
-            <table>
-                <tr><td style="color:var(--text-dim)">Operating Since</td><td>~March 2026</td></tr>
-                <tr><td style="color:var(--text-dim)">Paid Marketing</td><td style="color:var(--accent)">$0 — 100% organic</td></tr>
-                <tr><td style="color:var(--text-dim)">Platform</td><td>dragonfruit3d.com (Netlify)</td></tr>
-                <tr><td style="color:var(--text-dim)">Payments</td><td>Stripe (Card, PayNow, GrabPay)</td></tr>
-                <tr><td style="color:var(--text-dim)">Shipping</td><td>Standard courier — $6 SGD</td></tr>
-                <tr><td style="color:var(--text-dim)">Equipment Investment</td><td style="color:var(--primary)">~$270 SGD</td></tr>
-                <tr><td style="color:var(--text-dim)">Remaining Budget</td><td style="color:#FFD700">~$230 SGD</td></tr>
-            </table>
         </div>
     </div>
 </div>
@@ -204,18 +223,89 @@
 
     function pctMargin(o) { return o.revenue > 0 ? ((o.revenue - o.cogs) / o.revenue) * 100 : 0; }
 
+    // Orders arrive as "Cat Phone Stand (Purple) x2, 3D Benchy x1" — pull out each
+    // product name, its colour and quantity so we can count units, colours etc.
+    const ITEM_RE = /([A-Za-z0-9][^,(]*?)\s*(?:\(([^)]+)\))?\s*x(\d+)/g;
+    function parseItems(str) {
+        const out = []; let m; ITEM_RE.lastIndex = 0;
+        while ((m = ITEM_RE.exec(str || '')) !== null) {
+            out.push({ name: m[1].trim(), colour: (m[2] || '').trim() || null, qty: parseInt(m[3]) || 1 });
+        }
+        return out;
+    }
+    // dates come from Stripe as en-SG "d/m/yyyy"
+    function parseDate(str) {
+        const p = String(str || '').split('/');
+        if (p.length !== 3) return null;
+        const d = new Date(+p[2], +p[1] - 1, +p[0]);
+        return isNaN(d) ? null : d;
+    }
+    function tally(pairs) {                       // [[key, n], ...] -> sorted desc
+        const m = {};
+        pairs.forEach(([k, n]) => { if (k) m[k] = (m[k] || 0) + n; });
+        return Object.entries(m).sort((a, b) => b[1] - a[1]);
+    }
+    function bars(elId, rows, suffix) {
+        const el = document.getElementById(elId);
+        if (!rows.length) { el.innerHTML = '<div class="loading">No data yet.</div>'; return; }
+        const max = Math.max(...rows.map(r => r[1])) || 1;
+        el.innerHTML = rows.map(([label, n], i) => `
+            <div class="bar-row">
+                <div class="bar-label">${label.length > 18 ? label.slice(0, 16) + '…' : label}</div>
+                <div class="bar-track"><div class="bar-fill" style="width:${n / max * 100}%;background:${COLORS[i % COLORS.length]}"></div></div>
+                <div class="bar-val" style="color:${COLORS[i % COLORS.length]}">${n}${suffix || ''}</div>
+            </div>`).join('');
+    }
+
     function renderStats(orders) {
         const revenue = orders.reduce((s, o) => s + o.revenue, 0);
-        const cogs = orders.reduce((s, o) => s + o.cogs, 0);
-        const margin = revenue > 0 ? (((revenue - cogs) / revenue) * 100).toFixed(1) : '0.0';
-        const per = orders.map(pctMargin);
-        const avg = per.length ? (per.reduce((a, b) => a + b, 0) / per.length).toFixed(1) : '0.0';
-        const best = per.length ? Math.max(...per).toFixed(1) : '0.0';
-        document.getElementById('sMargin').textContent = margin + '%';
-        document.getElementById('sAvgMargin').textContent = avg + '%';
-        document.getElementById('sBestMargin').textContent = best + '%';
-        document.getElementById('sOrders').textContent = orders.length;
-        document.getElementById('sLatest').textContent = orders.length ? orders[0].date : '—';
+        const cogs    = orders.reduce((s, o) => s + o.cogs, 0);
+        const per     = orders.map(pctMargin);
+        const items   = orders.flatMap(o => parseItems(o.product));
+        const units   = items.reduce((s, i) => s + i.qty, 0);
+
+        const who = orders.map(o => (o.email && o.email !== 'No email') ? o.email : o.customer);
+        const counts = {}; who.forEach(c => { if (c) counts[c] = (counts[c] || 0) + 1; });
+        const uniq   = Object.keys(counts).length;
+        const repeat = Object.values(counts).filter(n => n > 1).length;
+
+        const dates = orders.map(o => parseDate(o.date)).filter(Boolean).sort((a, b) => a - b);
+        let days = 0, perWeek = '—';
+        if (dates.length) {
+            days = Math.max(1, Math.round((dates[dates.length - 1] - dates[0]) / 86400000) + 1);
+            perWeek = (orders.length / (days / 7)).toFixed(1);
+        }
+        const fmt = d => d ? d.toLocaleDateString('en-SG') : '—';
+        const topProd   = tally(items.map(i => [i.name, i.qty]))[0];
+        const topColour = tally(items.map(i => [i.colour, i.qty]))[0];
+        const set = (id, v) => { document.getElementById(id).textContent = v; };
+
+        set('sOrders', orders.length);
+        set('sItems', units);
+        set('sCustomers', uniq);
+        set('sRepeat', repeat + (uniq ? ` (${Math.round(repeat / uniq * 100)}%)` : ''));
+        set('sAvgItems', orders.length ? (units / orders.length).toFixed(1) : '—');
+        set('sProducts', new Set(items.map(i => i.name)).size);
+        set('sMargin', revenue > 0 ? (((revenue - cogs) / revenue) * 100).toFixed(1) + '%' : '—');
+        set('sAvgMargin', per.length ? (per.reduce((a, b) => a + b, 0) / per.length).toFixed(1) + '%' : '—');
+        set('sBestMargin', per.length ? Math.max(...per).toFixed(1) + '%' : '—');
+        set('sWorstMargin', per.length ? Math.min(...per).toFixed(1) + '%' : '—');
+        set('sDays', days || '—');
+        set('sPerWeek', perWeek);
+        set('sFirst', fmt(dates[0]));
+        set('sLatest', fmt(dates[dates.length - 1]));
+        set('sTopProduct', topProd ? topProd[0] : '—');
+        set('sTopColour', topColour ? topColour[0] : '—');
+
+        // charts
+        bars('productChart',  tally(items.map(i => [i.name, i.qty])));
+        bars('colourChart',   tally(items.map(i => [i.colour, i.qty])));
+        bars('customerChart', tally(orders.map(o => [o.customer, 1])).slice(0, 10));
+        const months = orders.map(o => {
+            const d = parseDate(o.date);
+            return [d ? d.toLocaleDateString('en-SG', { month: 'short', year: 'numeric' }) : null, 1];
+        });
+        bars('monthChart', tally(months).reverse());
     }
 
     function renderTable(orders) {
