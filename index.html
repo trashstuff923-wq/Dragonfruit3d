@@ -3116,7 +3116,7 @@
                 icon: '🐉',
                 image: '/images/dragon.png',
                 has3DView: true,
-                modelFile: 'dragon.stl',
+                modelFile: 'dragon-fixed.stl',
                 defaultColor: 'red',
                 colors: ['yellow', 'cyan', 'purple', 'green', 'red', 'orange', 'black', 'white', 'brown', 'ice-blue', 'glow', 'gradient']
             },
@@ -4217,7 +4217,7 @@
         // STL's own pose. Applied in BOTH the 3D viewer and AR so they always match.
         const AR_ORIENT = {
             '3dbenchy-fixed.stl': { rotX: -90 },   // benchy's biggest flat face is the cabin roof; auto-orient flips it
-            'dragon.stl':   { raw: true }    // articulated dragon looks best in its own pose, not laid flat
+            'dragon-fixed.stl': { raw: true }    // articulated dragon looks best in its own pose, not laid flat
         };
         // Items that should stick to a WALL in AR instead of the floor (wall art).
         const AR_WALL = {};
@@ -4416,7 +4416,7 @@
         document.getElementById('mobilePopup').style.display = 'block';
     }
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:99999;pointer-events:none">home v57</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:99999;pointer-events:none">home v58</div>
 
 <!-- ============================================================
      DRAGONFRUIT AR HELPER  (DF_AR)  — "View in your room"
