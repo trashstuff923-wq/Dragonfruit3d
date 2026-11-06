@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Dragonfruit 3D Vase Customizer · v48 (Jun 23) · AR (DF_AR): FrontSide export material (solidify already adds back-faces) kills the z-fight "patchy" look on decimated STLs; 3D viewer now solidify+FrontSide too; nicer two-ring flowers. v47: life-size via mm->m scaling (fixed dragon being ~1m); orientation now also applied in the on-site 3D viewer (not just AR). v46: GLB+USDZ, life-size, solidify() iPhone half-render fix, multi-color strip texture, auto-orient, 🌸 flowers. v46: nicer flowers — ring of petals + colored center per blossom (was icosahedron blobs). · Patterns: Bands, Accent (rim+foot), Dip (adjustable two-tone), Rhythm (multi-width) — all height-based/AMS-friendly, clean min-Y edges. Removed Stripes + Split. Multi-color 3MF via <m:colorgroup> (Variant B — loads with color in Bambu). Fixed sawtooth "razor" band edges (color bands by face min-Y so both triangles of a lathe quad match). 3MF still geometry-only. -->
+<!-- Dragonfruit 3D Vase Customizer · v53 (Nov 6) · v53: 📲 VIEW ON MY PHONE — design packed into a ?d= link + QR so you design on a laptop and open AR on your phone (link values validated + clamped). Older notes: v48 (Jun 23) · AR (DF_AR): FrontSide export material (solidify already adds back-faces) kills the z-fight "patchy" look on decimated STLs; 3D viewer now solidify+FrontSide too; nicer two-ring flowers. v47: life-size via mm->m scaling (fixed dragon being ~1m); orientation now also applied in the on-site 3D viewer (not just AR). v46: GLB+USDZ, life-size, solidify() iPhone half-render fix, multi-color strip texture, auto-orient, 🌸 flowers. v46: nicer flowers — ring of petals + colored center per blossom (was icosahedron blobs). · Patterns: Bands, Accent (rim+foot), Dip (adjustable two-tone), Rhythm (multi-width) — all height-based/AMS-friendly, clean min-Y edges. Removed Stripes + Split. Multi-color 3MF via <m:colorgroup> (Variant B — loads with color in Bambu). Fixed sawtooth "razor" band edges (color bands by face min-Y so both triangles of a lathe quad match). 3MF still geometry-only. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -209,6 +209,8 @@
 
     <button class="quote-btn" id="quoteBtn">REQUEST CUSTOM PRINT →</button>
     <button id="arBtn" style="width:100%;margin-top:8px;padding:13px;background:transparent;color:#00d4ff;border:1px solid #00d4ff;border-radius:8px;font-family:Orbitron,sans-serif;font-weight:700;letter-spacing:1px;cursor:pointer;font-size:13px" title="See this vase at real size in your room (works best on a phone)">📱 VIEW IN YOUR ROOM (AR)</button>
+    <!-- Laptop only: shows a QR code that opens THIS design on a phone, ready for AR. Hidden on touch devices. -->
+    <button id="phoneBtn" style="width:100%;margin-top:8px;padding:13px;background:transparent;color:#ff0096;border:1px dashed #ff0096;border-radius:8px;font-family:Orbitron,sans-serif;font-weight:700;letter-spacing:1px;cursor:pointer;font-size:13px" title="Designing on a laptop? Scan a QR code to open this exact vase on your phone and see it in AR">📲 VIEW ON MY PHONE (AR)</button>
     <!-- Staff-only download button. Visible only when URL has ?staff=1 (e.g. dragonfruit3d.com/customize-vase.html?staff=1) -->
     <button class="download-btn" id="downloadBtn" style="display:none" title="Staff only: Download a 3MF file you can open in Bambu Studio / Cura / PrusaSlicer. Includes per-color material groups for AMS.">⬇ DOWNLOAD 3MF (STAFF)</button>
   </div>
@@ -245,6 +247,22 @@
   <input type="file" name="vase-3mf">
 </form>
 
+<!-- 📲 Laptop → phone: QR popup (shown by the VIEW ON MY PHONE button) -->
+<div id="phoneModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(5,0,15,.88);align-items:center;justify-content:center;padding:16px">
+  <div style="width:100%;max-width:360px;background:#1a0a2e;border:1px solid #ff0096;border-radius:16px;padding:22px;text-align:center;box-shadow:0 0 40px rgba(255,0,150,.3)">
+    <div style="font-family:Orbitron,sans-serif;font-weight:900;color:#ff0096;letter-spacing:1px;font-size:16px">SCAN WITH YOUR PHONE</div>
+    <div style="font-family:'Space Mono',monospace;color:#8892a6;font-size:11px;margin:6px 0 14px">// opens this exact vase — then tap AR</div>
+    <div style="background:#fff;border-radius:10px;padding:10px;display:inline-block"><canvas id="qrCanvas" width="240" height="240" style="display:block;width:240px;height:240px"></canvas></div>
+    <div id="qrLocalWarn" style="display:none;font-family:'Space Mono',monospace;color:#ff9d00;font-size:10px;margin-top:10px">// this is your local test server — your phone can't open it. Use dragonfruit3d.com for the real thing.</div>
+    <input id="phoneLink" readonly style="width:100%;margin-top:14px;padding:9px;background:#0a0015;border:1px solid #9D4EDD;border-radius:8px;color:#e0e6ed;font-family:'Space Mono',monospace;font-size:10px">
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button id="copyLinkBtn" style="flex:1;padding:11px;background:linear-gradient(135deg,#ff0096,#9D4EDD);border:none;border-radius:8px;color:#fff;font-family:Orbitron,sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;cursor:pointer">COPY LINK</button>
+      <button id="closePhoneBtn" style="flex:1;padding:11px;background:transparent;border:1px solid #9D4EDD;border-radius:8px;color:#00d4ff;font-family:Orbitron,sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;cursor:pointer">CLOSE</button>
+    </div>
+  </div>
+</div>
+<!-- 📲 Phone side: banner shown when the page was opened from a design link -->
+<button id="linkBanner" style="display:none;position:fixed;left:12px;right:12px;bottom:14px;z-index:9998;padding:16px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff0096,#9D4EDD);color:#fff;font-family:Orbitron,sans-serif;font-weight:900;font-size:14px;letter-spacing:1px;box-shadow:0 0 30px rgba(255,0,150,.55);cursor:pointer">📱 TAP TO SEE IT IN YOUR ROOM<span style="display:block;font-family:'Space Mono',monospace;font-weight:400;font-size:10px;letter-spacing:0;opacity:.85;margin-top:4px">// your vase from the laptop is loaded</span></button>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <!-- JSZip for 3MF export (3MF is just a ZIP of XML files) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -1360,9 +1378,118 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
   }
 });
 
+// ───────────── 📲 DESIGN LINKS: laptop → phone for AR ─────────────
+// The whole design is the `state` object, so we pack it into the URL (?d=...).
+// No upload, no server: the link IS the design. The phone rebuilds the same vase.
+const PATTERNS = ['bands','accent','dip','rhythm'];
+
+function encodeDesign(){
+  const keys = Object.keys(STYLES[state.style].params);
+  const r = n => Math.round(n*100)/100;
+  // [format version, style, shape values, scale, multi?, pattern, #colors, #bands, dip line, colour 1, colours 2-4]
+  const arr = [1, state.style, keys.map(k => r(state.params[k])), r(state.scale),
+               state.finish === 'multi' ? 1 : 0, PATTERNS.indexOf(state.pattern),
+               state.numColors, state.sections, r(state.dipLine), state.colorIdx, state.secondaryColors];
+  return btoa(JSON.stringify(arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+// Links come from outside, so treat them as untrusted: check every value, clamp to the
+// slider limits, and return null (= ignore the link) if anything is off.
+function decodeDesign(code){
+  try {
+    const b = String(code).replace(/-/g,'+').replace(/_/g,'/');
+    const a = JSON.parse(atob(b + '==='.slice((b.length + 3) % 4)));
+    if (!Array.isArray(a) || a[0] !== 1) return null;
+    const [, style, vals, scale, multi, pat, nc, sec, dip, ci, secs] = a;
+    if (typeof style !== 'string' || !Object.prototype.hasOwnProperty.call(STYLES, style)) return null;
+    const defs = STYLES[style].params, keys = Object.keys(defs);
+    const isNum = v => typeof v === 'number' && isFinite(v);
+    if (!Array.isArray(vals) || vals.length !== keys.length || ![...vals, scale, nc, sec, dip].every(isNum)) return null;
+    const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+    const okColor = i => Number.isInteger(i) && i >= 0 && i < COLORS.length;
+    if (!okColor(ci)) return null;
+    const params = {};
+    keys.forEach((k, i) => params[k] = clamp(vals[i], defs[k].min, defs[k].max));
+    const pattern = PATTERNS[pat] || 'bands';
+    // Accent & Dip are exactly 2 colours (same rule as the pattern buttons)
+    let numColors = (pattern === 'accent' || pattern === 'dip') ? 2 : Math.round(clamp(nc, 2, 4));
+    const secondary = (Array.isArray(secs) ? secs : [])
+      .filter(okColor).filter((v, i, s) => v !== ci && s.indexOf(v) === i).slice(0, numColors - 1);
+    return { style, params, scale: clamp(scale, 0.5, 1.4), finish: multi === 1 ? 'multi' : 'single',
+             pattern, numColors, sections: Math.round(clamp(sec, 2, 12)), dipLine: clamp(dip, 0.2, 0.8),
+             colorIdx: ci, secondaryColors: multi === 1 ? secondary : [] };
+  } catch (e) { return null; }
+}
+
+// Put a decoded design into `state` and make every control show it.
+function applyDesignToControls(d){
+  Object.assign(state, d);
+  const mark = (grid, attr, val) => document.querySelectorAll(`#${grid} .opt-btn`)
+    .forEach(b => b.classList.toggle('active', b.dataset[attr] === String(val)));
+  mark('styleGrid', 'style', state.style);
+  mark('finishGrid', 'finish', state.finish);
+  mark('patternGrid', 'pattern', state.pattern);
+  mark('sizeGrid', 'size', state.scale);
+  const set = (id, v, label, text) => { document.getElementById(id).value = v; document.getElementById(label).textContent = text; };
+  set('scaleSlider', state.scale, 'val-scale', state.scale.toFixed(2) + '×');
+  set('numColorsSlider', state.numColors, 'val-numColors', state.numColors);
+  set('sectionsSlider', state.sections, 'val-sections', state.sections);
+  set('dipLineSlider', Math.round(state.dipLine * 100), 'val-dipLine', Math.round(state.dipLine * 100) + '%');
+  const multi = state.finish === 'multi';
+  document.getElementById('patternSection').style.display = multi ? '' : 'none';
+  document.getElementById('multiColorHelp').style.display = multi ? '' : 'none';
+}
+
+const linkDesign = (() => { const c = new URLSearchParams(location.search).get('d'); return c ? decodeDesign(c) : null; })();
+if (linkDesign) applyDesignToControls(linkDesign);
+
+// Laptop: QR popup. (QR library is only downloaded when this is pressed.)
+const phoneBtn = document.getElementById('phoneBtn'), phoneModal = document.getElementById('phoneModal');
+if (matchMedia('(pointer: coarse)').matches) phoneBtn.style.display = 'none';   // already on a phone
+function loadQRious(){
+  if (window.QRious) return Promise.resolve();
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js';
+    s.onload = res; s.onerror = () => rej(new Error('QR library failed to load'));
+    document.head.appendChild(s);
+  });
+}
+phoneBtn.addEventListener('click', async () => {
+  const url = location.origin + location.pathname + '?d=' + encodeDesign() + '&ar=1';
+  document.getElementById('phoneLink').value = url;
+  document.getElementById('qrLocalWarn').style.display =
+    /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) ? 'block' : 'none';
+  phoneModal.style.display = 'flex';
+  try {
+    await loadQRious();
+    // Dark-on-white on purpose: phone cameras need strong contrast to read a QR.
+    new QRious({ element: document.getElementById('qrCanvas'), value: url, size: 240, level: 'M',
+                 background: '#ffffff', foreground: '#0a0015' });
+  } catch (e) {
+    document.getElementById('qrLocalWarn').textContent = '// QR could not load — use COPY LINK and send it to your phone.';
+    document.getElementById('qrLocalWarn').style.display = 'block';
+  }
+});
+document.getElementById('closePhoneBtn').onclick = () => phoneModal.style.display = 'none';
+phoneModal.addEventListener('click', e => { if (e.target === phoneModal) phoneModal.style.display = 'none'; });
+document.getElementById('copyLinkBtn').addEventListener('click', async e => {
+  const inp = document.getElementById('phoneLink');
+  try { await navigator.clipboard.writeText(inp.value); } catch { inp.select(); document.execCommand('copy'); }
+  e.target.textContent = '✅ COPIED'; setTimeout(() => e.target.textContent = 'COPY LINK', 1800);
+});
+
 buildSliders(); buildColorGrid(); resizeRenderer(); buildVase(); updateCamera(); animate();
+
+// Phone: opened from a design link → big button straight into AR.
+// (iPhones only allow AR from a real tap, so we can't open it automatically.)
+if (linkDesign) {
+  const banner = document.getElementById('linkBanner');
+  banner.style.display = 'block';
+  banner.addEventListener('click', () => { banner.style.display = 'none'; document.getElementById('arBtn').click(); });
+}
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v52</div>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);z-index:9999;pointer-events:none">v53</div>
 
 <!-- ============================================================
      DRAGONFRUIT AR HELPER  (DF_AR)  — "View in your room"
