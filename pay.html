@@ -38,6 +38,14 @@
   .ok{background:rgba(0,212,255,.12);border:1px solid var(--accent);color:var(--accent)}
   .err{background:rgba(255,0,150,.12);border:1px solid var(--primary);color:var(--primary)}
   a.back{display:block;text-align:center;margin-top:16px;color:var(--dim);font-size:.72rem;text-decoration:none}
+  .opt{display:flex;gap:10px;align-items:flex-start;padding:12px;margin-bottom:12px;border:1px dashed var(--secondary);
+    border-radius:9px;cursor:pointer;font-size:.78rem;line-height:1.45;color:var(--text)}
+  .opt input{width:20px;height:20px;flex-shrink:0;margin-top:1px;accent-color:var(--primary);cursor:pointer}
+  #optFields{margin:-4px 0 18px;padding:12px;border:1px solid var(--secondary);border-radius:9px;background:#0d0420}
+  #optFields input,#optFields select{width:100%;padding:11px;background:var(--dark);border:1px solid var(--secondary);
+    border-radius:8px;color:var(--text);font-family:'Space Mono',monospace;font-size:.85rem;margin-bottom:10px}
+  #optFields input:focus,#optFields select:focus{outline:none;border-color:var(--accent)}
+  .fine{color:var(--dim);font-size:.66rem;line-height:1.5}
 </style>
 </head>
 <body>
@@ -60,6 +68,26 @@
 
   <label for="note">WHAT DID THEY BUY? (optional)</label>
   <input id="note" type="text" maxlength="60" placeholder="e.g. hexagon fidget + benchy">
+
+  <!-- Opt-in for stall news. Unticked by default: consent must be given, not assumed (Singapore PDPA). -->
+  <label class="opt" for="optIn">
+    <input id="optIn" type="checkbox">
+    <span>📍 Email me when Dragonfruit 3D has a stall near me</span>
+  </label>
+  <div id="optFields" hidden>
+    <label for="optEmail">YOUR EMAIL</label>
+    <input id="optEmail" type="email" maxlength="80" placeholder="you@email.com" autocomplete="email">
+    <label for="optArea">WHICH PART OF SINGAPORE? (optional)</label>
+    <select id="optArea">
+      <option value="">— pick one —</option>
+      <option>Central (Orchard, Toa Payoh, Bishan, Queenstown)</option>
+      <option>East (Tampines, Bedok, Pasir Ris, Changi)</option>
+      <option>North (Woodlands, Yishun, Sembawang)</option>
+      <option>North-East (Hougang, Sengkang, Punggol, Serangoon)</option>
+      <option>West (Jurong, Clementi, Bukit Batok, Choa Chu Kang)</option>
+    </select>
+    <div class="fine">// only stall news, nothing else. reply STOP to any email and you're off the list.</div>
+  </div>
 
   <button id="payBtn">PAY NOW</button>
   <div class="methods">// PayNow · Card · GrabPay<br>secure checkout by Stripe</div>
@@ -87,6 +115,21 @@ if(q.get('paid')){
   history.replaceState({},document.title,'/pay.html');
 }
 
+// opt-in: reveal the email/area fields only when the box is ticked
+const optIn=document.getElementById('optIn'),optFields=document.getElementById('optFields'),
+      optEmail=document.getElementById('optEmail'),optArea=document.getElementById('optArea');
+optIn.onchange=()=>{ optFields.hidden=!optIn.checked; if(optIn.checked) optEmail.focus(); };
+
+// Log a stall-news signup to the Netlify "stall-updates" form.
+// Never blocks the payment: if Netlify is slow or down, we give up after 2.5s and carry on.
+function logSignup(email,area){
+  const body=new URLSearchParams({'form-name':'stall-updates',email,area:area||'not given',
+    source:'pay page',date:new Date().toLocaleString('en-SG')});
+  const post=fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString()});
+  const timeout=new Promise(res=>setTimeout(res,2500));
+  return Promise.race([post,timeout]).catch(e=>console.warn('signup not logged:',e));
+}
+
 btn.onclick=async()=>{
   errMsg.style.display='none';
   const amount=parseFloat(amountEl.value);
@@ -94,7 +137,13 @@ btn.onclick=async()=>{
     errMsg.textContent='Enter an amount between $1 and $500.';
     errMsg.style.display='block'; return;
   }
+  const email=optEmail.value.trim();
+  if(optIn.checked && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    errMsg.textContent='Add a valid email for stall news — or untick the box.';
+    errMsg.style.display='block'; optEmail.focus(); return;
+  }
   btn.disabled=true; btn.textContent='STARTING…';
+  if(optIn.checked) await logSignup(email,optArea.value);
   try{
     const r=await fetch('/.netlify/functions/create-custom-payment',{
       method:'POST',headers:{'Content-Type':'application/json'},
@@ -110,6 +159,10 @@ btn.onclick=async()=>{
 };
 amountEl.addEventListener('keydown',e=>{ if(e.key==='Enter') btn.click(); });
 </script>
-<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3)">pay v1</div>
+<!-- Static copy so Netlify detects the "stall-updates" form at deploy time. The real submit is the fetch() above. -->
+<form name="stall-updates" netlify netlify-honeypot="bot-field" hidden>
+  <input name="email"><input name="area"><input name="source"><input name="date"><input name="bot-field">
+</form>
+<div style="position:fixed;bottom:6px;right:8px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3)">pay v2</div>
 </body>
 </html>
